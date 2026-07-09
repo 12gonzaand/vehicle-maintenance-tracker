@@ -1,0 +1,19 @@
+{
+  "name": "maintenance-tracker",
+  "version": "1.0.0",
+  "description": "Self-hosted vehicle maintenance tracker",
+  "private": true,
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.21.0",
+    "method-override": "^3.0.0",
+    "multer": "^2.2.0"
+  }
+}

@@ -1,0 +1,37 @@
+<%- include('../partials/header', { title: 'Vehicles' }) %>
+
+<div class="page-header">
+  <h1>Vehicles</h1>
+  <a class="btn btn-primary" href="/vehicles/new">+ Add Vehicle</a>
+</div>
+
+<p class="toggle-link">
+  <% if (showArchived) { %>
+    <a href="/vehicles">Hide archived</a>
+  <% } else { %>
+    <a href="/vehicles?archived=1">Show archived</a>
+  <% } %>
+</p>
+
+<% if (vehicles.length === 0) { %>
+  <p class="empty-state">No vehicles yet. Add your first one above.</p>
+<% } else { %>
+<div class="card-grid">
+  <% vehicles.forEach(v => { %>
+    <a class="card vehicle-card <%= v.archived ? 'archived' : '' %>" href="/vehicles/<%= v.id %>">
+      <% if (v.photo_path) { %>
+        <img class="vehicle-thumb" src="/uploads/<%= v.photo_path %>" alt="<%= v.name %>">
+      <% } else { %>
+        <div class="vehicle-thumb placeholder">🚗</div>
+      <% } %>
+      <div class="vehicle-card-body">
+        <h3><%= v.name %><% if (v.archived) { %> <span class="badge">archived</span><% } %></h3>
+        <p><%= [v.year, v.make, v.model].filter(Boolean).join(' ') %></p>
+        <p class="mileage"><%= v.current_mileage != null ? v.current_mileage.toLocaleString() + ' mi' : '—' %></p>
+      </div>
+    </a>
+  <% }) %>
+</div>
+<% } %>
+
+<%- include('../partials/footer') %>

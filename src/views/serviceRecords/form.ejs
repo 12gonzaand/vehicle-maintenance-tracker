@@ -1,0 +1,43 @@
+<%- include('../partials/header', { title: record ? 'Edit Service Record' : 'Add Service Record' }) %>
+
+<p class="breadcrumb"><a href="/vehicles/<%= vehicle.id %>">&larr; <%= vehicle.name %></a></p>
+<h1><%= record ? 'Edit Service Record' : 'Add Service Record' %></h1>
+
+<form method="post" action="<%= record ? `/vehicles/${vehicle.id}/records/${record.id}` : `/vehicles/${vehicle.id}/records` %>" class="form"<% if (!record) { %> enctype="multipart/form-data"<% } %>>
+  <label>Service Type
+    <input list="service-type-options" name="service_type" required value="<%= record ? record.service_type : '' %>">
+    <datalist id="service-type-options">
+      <% serviceTypes.forEach(st => { %>
+        <option value="<%= st.name %>">
+      <% }) %>
+    </datalist>
+  </label>
+  <div class="form-row">
+    <label>Date Performed
+      <input type="date" name="service_date" required value="<%= record ? record.service_date : '' %>">
+    </label>
+    <label>Mileage
+      <input type="number" name="mileage" value="<%= record && record.mileage != null ? record.mileage : '' %>">
+    </label>
+    <label>Cost
+      <input type="number" step="0.01" name="cost" value="<%= record && record.cost != null ? record.cost : '' %>">
+    </label>
+  </div>
+  <label>Shop / Location (optional, e.g. "self" or shop name)
+    <input type="text" name="shop" value="<%= record ? record.shop || '' : '' %>">
+  </label>
+  <label>Notes
+    <textarea name="notes" rows="4"><%= record ? record.notes || '' : '' %></textarea>
+  </label>
+  <% if (!record) { %>
+  <label>Receipts / Invoice Photos (optional, JPG/PNG/PDF)
+    <input type="file" name="files" accept="image/jpeg,image/png,application/pdf" multiple>
+  </label>
+  <% } %>
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary"><%= record ? 'Save Changes' : 'Add Record' %></button>
+    <a class="btn" href="<%= record ? `/vehicles/${vehicle.id}/records/${record.id}` : `/vehicles/${vehicle.id}` %>">Cancel</a>
+  </div>
+</form>
+
+<%- include('../partials/footer') %>

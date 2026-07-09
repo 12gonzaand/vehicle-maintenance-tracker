@@ -1,0 +1,56 @@
+<%- include('../partials/header', { title: record.service_type }) %>
+
+<p class="breadcrumb"><a href="/vehicles/<%= vehicle.id %>">&larr; <%= vehicle.name %></a></p>
+
+<div class="page-header">
+  <h1><%= record.service_type %></h1>
+  <div class="page-actions">
+    <a class="btn" href="/vehicles/<%= vehicle.id %>/records/<%= record.id %>/edit">Edit</a>
+    <form method="post" action="/vehicles/<%= vehicle.id %>/records/<%= record.id %>/delete" class="inline-form" onsubmit="return confirm('Delete this service record and its attached files?');">
+      <button type="submit" class="btn btn-danger">Delete</button>
+    </form>
+  </div>
+</div>
+
+<dl class="detail-list">
+  <dt>Date</dt><dd><%= record.service_date %></dd>
+  <dt>Mileage</dt><dd><%= record.mileage != null ? record.mileage.toLocaleString() + ' mi' : '—' %></dd>
+  <dt>Cost</dt><dd><%= record.cost != null ? '$' + record.cost.toFixed(2) : '—' %></dd>
+  <dt>Shop</dt><dd><%= record.shop || '—' %></dd>
+  <dt>Notes</dt><dd><%= record.notes || '—' %></dd>
+</dl>
+
+<section class="section">
+  <h2>Receipts / Files</h2>
+
+  <% if (files.length === 0) { %>
+    <p class="empty-state">No files attached.</p>
+  <% } else { %>
+  <div class="file-grid">
+    <% files.forEach(f => { %>
+      <div class="file-card">
+        <% if (f.mime_type.startsWith('image/')) { %>
+          <a href="/uploads/<%= f.stored_path %>" target="_blank">
+            <img class="file-thumb" src="/uploads/<%= f.stored_path %>" alt="<%= f.original_filename %>">
+          </a>
+        <% } else { %>
+          <a href="/uploads/<%= f.stored_path %>" target="_blank" class="file-thumb placeholder">📄</a>
+        <% } %>
+        <p class="file-name"><%= f.original_filename %></p>
+        <form method="post" action="/vehicles/<%= vehicle.id %>/records/<%= record.id %>/files/<%= f.id %>/delete" class="inline-form" onsubmit="return confirm('Delete this file?');">
+          <button type="submit" class="btn btn-danger btn-small">Remove</button>
+        </form>
+      </div>
+    <% }) %>
+  </div>
+  <% } %>
+
+  <form method="post" action="/vehicles/<%= vehicle.id %>/records/<%= record.id %>/files" enctype="multipart/form-data" class="form form-inline">
+    <label>Add files (JPG, PNG, PDF)
+      <input type="file" name="files" accept="image/jpeg,image/png,application/pdf" multiple>
+    </label>
+    <button type="submit" class="btn">Upload</button>
+  </form>
+</section>
+
+<%- include('../partials/footer') %>
