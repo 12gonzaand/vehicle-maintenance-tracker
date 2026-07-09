@@ -1,0 +1,45 @@
+<%- include('../partials/header', { title: vehicle ? 'Edit Vehicle' : 'Add Vehicle' }) %>
+
+<h1><%= vehicle ? 'Edit Vehicle' : 'Add Vehicle' %></h1>
+
+<form method="post" action="<%= vehicle ? `/vehicles/${vehicle.id}` : '/vehicles' %>" class="form">
+  <label>Name / Nickname
+    <input type="text" name="name" required value="<%= vehicle ? vehicle.name : '' %>">
+  </label>
+  <div class="form-row">
+    <label>Year
+      <input type="number" name="year" value="<%= vehicle && vehicle.year != null ? vehicle.year : '' %>">
+    </label>
+    <label>Make
+      <input type="text" name="make" value="<%= vehicle ? vehicle.make || '' : '' %>">
+    </label>
+    <label>Model
+      <input type="text" name="model" value="<%= vehicle ? vehicle.model || '' : '' %>">
+    </label>
+  </div>
+  <div class="form-row">
+    <label>VIN (optional)
+      <input type="text" name="vin" value="<%= vehicle ? vehicle.vin || '' : '' %>">
+    </label>
+    <label>Current Mileage
+      <input type="number" name="current_mileage" value="<%= vehicle && vehicle.current_mileage != null ? vehicle.current_mileage : '' %>">
+    </label>
+  </div>
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary"><%= vehicle ? 'Save Changes' : 'Add Vehicle' %></button>
+    <a class="btn" href="<%= vehicle ? `/vehicles/${vehicle.id}` : '/vehicles' %>">Cancel</a>
+  </div>
+</form>
+
+<% if (vehicle) { %>
+<form method="post" action="/vehicles/<%= vehicle.id %>/photo" enctype="multipart/form-data" class="form">
+  <label>Vehicle Photo (optional)
+    <input type="file" name="photo" accept="image/jpeg,image/png">
+  </label>
+  <div class="form-actions">
+    <button type="submit" class="btn">Upload Photo</button>
+  </div>
+</form>
+<% } %>
+
+<%- include('../partials/footer') %>

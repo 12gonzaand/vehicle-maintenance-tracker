@@ -1,0 +1,127 @@
+<%- include('../partials/header', { title: vehicle.name }) %>
+
+<div class="page-header">
+  <div>
+    <h1><%= vehicle.name %></h1>
+    <p class="subtitle"><%= [vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(' ') %>
+      <% if (vehicle.vin) { %> &middot; VIN: <%= vehicle.vin %><% } %>
+    </p>
+    <p class="mileage-current"><%= vehicle.current_mileage != null ? vehicle.current_mileage.toLocaleString() + ' mi' : 'No mileage recorded' %></p>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="/vehicles/<%= vehicle.id %>/edit">Edit</a>
+    <% if (vehicle.archived) { %>
+      <form method="post" action="/vehicles/<%= vehicle.id %>/unarchive" class="inline-form">
+        <button type="submit" class="btn">Unarchive</button>
+      </form>
+    <% } else { %>
+      <form method="post" action="/vehicles/<%= vehicle.id %>/archive" class="inline-form">
+        <button type="submit" class="btn">Archive</button>
+      </form>
+    <% } %>
+    <form method="post" action="/vehicles/<%= vehicle.id %>/delete" class="inline-form" onsubmit="return confirm('Permanently delete this vehicle and all its service records? This cannot be undone.');">
+      <button type="submit" class="btn btn-danger">Delete</button>
+    </form>
+  </div>
+</div>
+
+<% if (vehicle.photo_path) { %>
+  <img class="vehicle-photo" src="/uploads/<%= vehicle.photo_path %>" alt="<%= vehicle.name %>">
+<% } %>
+
+<section class="section">
+  <div class="section-header">
+    <h2>Service Records</h2>
+    <a class="btn btn-primary" href="/vehicles/<%= vehicle.id %>/records/new">+ Add Service Record</a>
+  </div>
+
+  <form method="get" class="filter-form">
+    <label>Sort by
+      <select name="sortBy" onchange="this.form.submit()">
+        <option value="service_date" <%= query.sortBy === 'service_date' || !query.sortBy ? 'selected' : '' %>>Date</option>
+        <option value="mileage" <%= query.sortBy === 'mileage' ? 'selected' : '' %>>Mileage</option>
+        <option value="service_type" <%= query.sortBy === 'service_type' ? 'selected' : '' %>>Service Type</option>
+      </select>
+    </label>
+    <label>Order
+      <select name="order" onchange="this.form.submit()">
+        <option value="DESC" <%= query.order !== 'ASC' ? 'selected' : '' %>>Descending</option>
+        <option value="ASC" <%= query.order === 'ASC' ? 'selected' : '' %>>Ascending</option>
+      </select>
+    </label>
+    <label>Filter by Type
+      <select name="serviceType" onchange="this.form.submit()">
+        <option value="">All</option>
+        <% serviceTypes.forEach(st => { %>
+          <option value="<%= st.name %>" <%= query.serviceType === st.name ? 'selected' : '' %>><%= st.name %></option>
+        <% }) %>
+      </select>
+    </label>
+  </form>
+
+  <% if (records.length === 0) { %>
+    <p class="empty-state">No service records yet.</p>
+  <% } else { %>
+  <div class="table-scroll">
+  <table class="records-table">
+    <thead>
+      <tr><th>Date</th><th>Type</th><th>Mileage</th><th>Cost</th><th>Shop</th></tr>
+    </thead>
+    <tbody>
+      <% records.forEach(r => { %>
+        <tr onclick="window.location='/vehicles/<%= vehicle.id %>/records/<%= r.id %>'" class="clickable-row">
+          <td><%= r.service_date %></td>
+          <td><%= r.service_type %></td>
+          <td><%= r.mileage != null ? r.mileage.toLocaleString() : '—' %></td>
+          <td><%= r.cost != null ? '$' + r.cost.toFixed(2) : '—' %></td>
+          <td><%= r.shop || '—' %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  </div>
+  <% } %>
+</section>
+
+<section class="section">
+  <div class="section-header">
+    <h2>Mileage History</h2>
+  </div>
+
+  <form method="post" action="/vehicles/<%= vehicle.id %>/mileage-logs" class="form form-inline">
+    <label>Date
+      <input type="date" name="log_date" required>
+    </label>
+    <label>Mileage
+      <input type="number" name="mileage" required>
+    </label>
+    <label>Note (optional)
+      <input type="text" name="note">
+    </label>
+    <button type="submit" class="btn">Log Mileage</button>
+  </form>
+
+  <% if (mileageHistory.length === 0) { %>
+    <p class="empty-state">No mileage history yet.</p>
+  <% } else { %>
+  <div class="table-scroll">
+  <table class="records-table">
+    <thead><tr><th>Date</th><th>Mileage</th><th>Source</th></tr></thead>
+    <tbody>
+      <% mileageHistory.forEach(m => { %>
+        <tr>
+          <td><%= m.date %></td>
+          <td><%= m.mileage.toLocaleString() %></td>
+          <td><%= m.source === 'service' ? m.label : (m.label || 'Mileage log') %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  </div>
+  <canvas id="mileage-chart" height="120"
+    data-points='<%- JSON.stringify(mileageHistory.map(m => ({ date: m.date, mileage: m.mileage }))) %>'></canvas>
+  <% } %>
+</section>
+
+<script src="/public/js/mileage-chart.js"></script>
+<%- include('../partials/footer') %>
