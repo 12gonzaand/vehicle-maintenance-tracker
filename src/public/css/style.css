@@ -202,6 +202,22 @@ input, select, textarea {
 }
 .file-name { font-size: 0.8rem; color: var(--text-muted); word-break: break-all; margin: 0.4rem 0; }
 
+.auth-page {
+  display: flex;
+  justify-content: center;
+  padding-top: 3rem;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 320px;
+  text-align: center;
+}
+
+.auth-card .form { max-width: none; text-align: left; }
+.auth-card .form-actions { justify-content: center; }
+.auth-error { color: var(--danger); margin: 0 0 0.75rem; }
+
 .empty-state { color: var(--text-muted); font-style: italic; }
 .breadcrumb { margin: 0 0 0.5rem; }
 .breadcrumb a { color: var(--text-muted); text-decoration: none; }
