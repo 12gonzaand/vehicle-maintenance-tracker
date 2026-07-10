@@ -1,0 +1,19 @@
+<%- include('../partials/header', { title: 'Log In' }) %>
+
+<h1>Log In</h1>
+
+<div class="section" style="max-width: 320px;">
+  <% if (error) { %>
+    <p style="color: var(--danger);"><%= error %></p>
+  <% } %>
+  <form method="post" action="/login" class="form">
+    <label>Password
+      <input type="password" name="password" required autofocus>
+    </label>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Log In</button>
+    </div>
+  </form>
+</div>
+
+<%- include('../partials/footer') %>

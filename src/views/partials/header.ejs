@@ -10,7 +10,12 @@
   <meta name="apple-mobile-web-app-title" content="Maintenance">
 </head>
 <body>
-  <header class="site-header">
+  <header class="site-header page-header">
     <a href="/vehicles" class="brand">Maintenance Tracker</a>
+    <% if (typeof session !== 'undefined' && session && session.authenticated) { %>
+      <form method="post" action="/logout" class="inline-form">
+        <button type="submit" class="btn btn-small">Log Out</button>
+      </form>
+    <% } %>
   </header>
   <main class="container">
