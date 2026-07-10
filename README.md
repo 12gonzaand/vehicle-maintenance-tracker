@@ -1,6 +1,6 @@
 # Maintenance Tracker
 
-Self-hosted web app for tracking maintenance on personal vehicles. Node.js + Express + SQLite, no auth (intended for access over Tailscale only).
+Self-hosted web app for tracking maintenance on personal vehicles. Node.js + Express + SQLite, gated by a single shared-password login (intended for access over Tailscale only).
 
 ## Setup
 
@@ -17,7 +17,23 @@ HOST=0.0.0.0
 DB_PATH=./data/maintenance.sqlite
 UPLOADS_DIR=./uploads
 MAX_FILE_SIZE_MB=15
+SESSION_SECRET=change-me-to-a-random-string
+AUTH_PASSWORD_HASH=bcrypt-hash-of-your-login-password
 ```
+
+`SESSION_SECRET` can be any random string, e.g. generate one with:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+`AUTH_PASSWORD_HASH` is a bcrypt hash of the password you'll use to log in — generate it with:
+
+```bash
+node -e "console.log(require('bcrypt').hashSync(process.argv[1], 12))" 'your-password-here'
+```
+
+Never commit `.env` — it holds the real secret and hash (`.env.example` only has placeholders).
 
 ## Run
 
@@ -101,9 +117,10 @@ src/
     migrate.js           Applies schema.sql on startup
     index.js              better-sqlite3 connection
   models/               Data access per table (vehicle, serviceRecord, serviceFile, mileageLog, serviceType)
-  routes/               Express routers (vehicles, serviceRecords, mileageLogs)
+  routes/               Express routers (auth, vehicles, serviceRecords, mileageLogs)
   middleware/
     upload.js            multer config — file type/size validation, per-vehicle/per-record storage paths
+    requireAuth.js       Session check, redirects to /login if not authenticated
   views/                EJS templates (server-rendered)
   public/               Static CSS/JS (table sort/filter is server-side via query params; mileage chart is a small canvas script)
 uploads/                Uploaded files, gitignored
@@ -112,7 +129,7 @@ data/                  SQLite database file, gitignored
 
 ## Notes
 
-- No authentication — access control is expected to come from the network (Tailscale ACLs / not exposing the port publicly).
+- Single shared-password login (session-based, `bcrypt` + `express-session`) — there's one password for the whole app, no per-user accounts. Access control still primarily comes from the network (Tailscale ACLs / not exposing the port publicly); the login is a second layer, not a substitute.
 - File uploads accept JPG, PNG, and PDF only, capped at `MAX_FILE_SIZE_MB` (default 15MB).
 - Vehicle `current_mileage` is automatically bumped whenever a new service record or mileage log entry has a higher mileage than what's on file.
 - Maintenance reminders (mileage/time-interval based) are not implemented in v1; the `reminder_rules` table exists in the schema for future use.
