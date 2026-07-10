@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#171717"/>
+  <rect x="88" y="88" width="336" height="336" rx="68" fill="none" stroke="#2563eb" stroke-width="22"/>
+
+  <!-- car silhouette -->
+  <g transform="translate(256 300)">
+    <rect x="-118" y="-8" width="236" height="56" rx="20" fill="#2563eb"/>
+    <rect x="-68" y="-46" width="136" height="46" rx="16" fill="#2563eb"/>
+    <circle cx="-70" cy="48" r="30" fill="#171717"/>
+    <circle cx="-70" cy="48" r="14" fill="#2563eb"/>
+    <circle cx="70" cy="48" r="30" fill="#171717"/>
+    <circle cx="70" cy="48" r="14" fill="#2563eb"/>
+  </g>
+
+  <!-- hex-bolt accent badge -->
+  <polygon points="392,104 414.52,117 414.52,143 392,156 369.48,143 369.48,117" fill="#f7f7f8"/>
+  <circle cx="392" cy="130" r="9" fill="#171717"/>
+</svg>
