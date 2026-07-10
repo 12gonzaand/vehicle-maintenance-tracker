@@ -1,0 +1,16 @@
+{
+  "name": "Maintenance Tracker",
+  "short_name": "Maintenance",
+  "display": "standalone",
+  "background_color": "#171717",
+  "theme_color": "#171717",
+  "start_url": "/vehicles",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/public/icons/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
