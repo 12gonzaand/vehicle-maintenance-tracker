@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('dotenv').config({ path: '.env.local' });
 const migrate = require('./db/migrate');
 const app = require('./app');
 

@@ -7,8 +7,11 @@
       <p class="auth-error"><%= error %></p>
     <% } %>
     <form method="post" action="/login" class="form">
+      <label>Username
+        <input type="text" name="username" required autofocus autocomplete="username">
+      </label>
       <label>Password
-        <input type="password" name="password" required autofocus>
+        <input type="password" name="password" required autocomplete="current-password">
       </label>
       <div class="form-actions">
         <button type="submit" class="btn btn-primary">Log In</button>
