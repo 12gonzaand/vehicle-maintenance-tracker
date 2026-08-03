@@ -7,7 +7,7 @@ const authRouter = require('./routes/auth');
 const vehiclesRouter = require('./routes/vehicles');
 const serviceRecordsRouter = require('./routes/serviceRecords');
 const mileageLogsRouter = require('./routes/mileageLogs');
-const requireAuth = require('./middleware/requireAuth');
+const { ensureSessionSecret, requireAuth } = require('./lib/auth');
 
 const app = express();
 
@@ -18,7 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(methodOverride('_method'));
 app.use(session({
-  secret: process.env.SESSION_SECRET,
+  secret: ensureSessionSecret(),
   resave: false,
   saveUninitialized: false,
   cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 }

@@ -1,6 +1,6 @@
 # Maintenance Tracker
 
-Self-hosted web app for tracking maintenance on personal vehicles. Node.js + Express + SQLite, gated by a single shared-password login (intended for access over Tailscale only).
+Self-hosted web app for tracking maintenance on personal vehicles. Node.js + Express + SQLite, gated by a username/password login (intended for access over Tailscale only).
 
 ## Setup
 
@@ -17,23 +17,9 @@ HOST=0.0.0.0
 DB_PATH=./data/maintenance.sqlite
 UPLOADS_DIR=./uploads
 MAX_FILE_SIZE_MB=15
-SESSION_SECRET=change-me-to-a-random-string
-AUTH_PASSWORD_HASH=bcrypt-hash-of-your-login-password
 ```
 
-`SESSION_SECRET` can be any random string, e.g. generate one with:
-
-```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
-
-`AUTH_PASSWORD_HASH` is a bcrypt hash of the password you'll use to log in — generate it with:
-
-```bash
-node -e "console.log(require('bcrypt').hashSync(process.argv[1], 12))" 'your-password-here'
-```
-
-Never commit `.env` — it holds the real secret and hash (`.env.example` only has placeholders).
+No auth secrets belong in `.env`. The session secret is generated automatically on first run and written to `.env.local` (gitignored); the username/password are stored (bcrypt-hashed) in the SQLite database, set via the first-run setup screen described below.
 
 ## Run
 
@@ -42,6 +28,16 @@ npm start
 ```
 
 The database schema is applied automatically on startup (safe to run repeatedly — uses `CREATE TABLE IF NOT EXISTS`). The app will be available at `http://<HOST>:<PORT>`, e.g. `http://<your-tailscale-ip>:3003` over your Tailscale network, or `http://localhost:3003` locally.
+
+The first time you visit, you'll land on a **Set Up Password** screen (no username/password configured yet) — choose a username and password (min 8 characters) there. After that, every visit requires logging in with those credentials. Five incorrect attempts from an IP locks that IP out for 10 minutes.
+
+If you forget your credentials, reset them from the server:
+
+```bash
+npm run reset-password
+```
+
+This prompts for a new username and password and overwrites whatever was set before. Restart the service afterward to log out any existing sessions.
 
 For local development with auto-restart on file changes:
 
@@ -118,9 +114,10 @@ src/
     index.js              better-sqlite3 connection
   models/               Data access per table (vehicle, serviceRecord, serviceFile, mileageLog, serviceType)
   routes/               Express routers (auth, vehicles, serviceRecords, mileageLogs)
+  lib/
+    auth.js               Username/password storage, session secret, login lockout, requireAuth middleware
   middleware/
     upload.js            multer config — file type/size validation, per-vehicle/per-record storage paths
-    requireAuth.js       Session check, redirects to /login if not authenticated
   views/                EJS templates (server-rendered)
   public/               Static CSS/JS (table sort/filter is server-side via query params; mileage chart is a small canvas script)
 uploads/                Uploaded files, gitignored
@@ -129,7 +126,7 @@ data/                  SQLite database file, gitignored
 
 ## Notes
 
-- Single shared-password login (session-based, `bcrypt` + `express-session`) — there's one password for the whole app, no per-user accounts. Access control still primarily comes from the network (Tailscale ACLs / not exposing the port publicly); the login is a second layer, not a substitute.
+- Single username/password login (session-based, `bcrypt` + `express-session`), stored in the database — no per-user accounts. Access control still primarily comes from the network (Tailscale ACLs / not exposing the port publicly); the login is a second layer, not a substitute. Failed logins are rate-limited per IP (5 attempts, then a 10-minute lockout).
 - File uploads accept JPG, PNG, and PDF only, capped at `MAX_FILE_SIZE_MB` (default 15MB).
 - Vehicle `current_mileage` is automatically bumped whenever a new service record or mileage log entry has a higher mileage than what's on file.
 - Maintenance reminders (mileage/time-interval based) are not implemented in v1; the `reminder_rules` table exists in the schema for future use.

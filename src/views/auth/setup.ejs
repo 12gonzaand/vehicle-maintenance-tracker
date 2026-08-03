@@ -1,0 +1,27 @@
+<%- include('../partials/header', { title: 'Set Up Password' }) %>
+
+<div class="auth-page">
+  <div class="auth-card section">
+    <h1>Set Up Password</h1>
+    <p>No password is configured yet. Choose one to protect this app going forward — at least 8 characters.</p>
+    <% if (error) { %>
+      <p class="auth-error"><%= error %></p>
+    <% } %>
+    <form method="post" action="/login/setup" class="form">
+      <label>Username
+        <input type="text" name="username" required autofocus autocomplete="username">
+      </label>
+      <label>New Password
+        <input type="password" name="password" required minlength="8">
+      </label>
+      <label>Confirm Password
+        <input type="password" name="confirm_password" required minlength="8">
+      </label>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Set Password &amp; Continue</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
