@@ -11,6 +11,7 @@ function ensureSessionSecret() {
 
   const secret = crypto.randomBytes(32).toString('hex');
   fs.appendFileSync(ENV_LOCAL_PATH, `\nSESSION_SECRET=${secret}\n`);
+  fs.chmodSync(ENV_LOCAL_PATH, 0o600);
   process.env.SESSION_SECRET = secret;
   return secret;
 }
@@ -50,11 +51,18 @@ function verifyPassword(password) {
   return bcrypt.compareSync(password, hash);
 }
 
+// Precomputed at startup so a bcrypt compare always runs below, even when the
+// username is wrong or no password is set yet — otherwise a wrong username
+// returns near-instantly while a wrong password takes ~100ms, letting an
+// attacker fingerprint the valid username by timing responses.
+const DUMMY_HASH = bcrypt.hashSync(crypto.randomBytes(32).toString('hex'), 12);
+
 function verifyCredentials(username, password) {
   const storedUsername = getUsername();
-  if (!storedUsername || !username) return false;
-  if (username.trim() !== storedUsername) return false;
-  return verifyPassword(password);
+  const hash = getPasswordHash() || DUMMY_HASH;
+  const usernameOk = typeof username === 'string' && Boolean(storedUsername) && username.trim() === storedUsername;
+  const passwordOk = typeof password === 'string' && bcrypt.compareSync(password, hash);
+  return usernameOk && passwordOk;
 }
 
 // Per-IP login lockout: 5 failed attempts locks that IP out for 10 minutes.
