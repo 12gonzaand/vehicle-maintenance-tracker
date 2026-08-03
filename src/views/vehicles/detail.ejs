@@ -119,7 +119,7 @@
   </table>
   </div>
   <canvas id="mileage-chart" height="120"
-    data-points='<%- JSON.stringify(mileageHistory.map(m => ({ date: m.date, mileage: m.mileage }))) %>'></canvas>
+    data-points='<%= JSON.stringify(mileageHistory.map(m => ({ date: m.date, mileage: m.mileage }))) %>'></canvas>
   <% } %>
 </section>
 
