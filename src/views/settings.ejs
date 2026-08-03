@@ -1,0 +1,18 @@
+<%- include('partials/header', { title: 'Settings' }) %>
+
+<h1>Settings</h1>
+
+<section class="section">
+  <div class="section-header">
+    <h2>Display</h2>
+  </div>
+  <p class="subtitle" style="margin: 0 0 0.9rem;">Choose how the manual reads on this device. System follows your OS.</p>
+  <div class="theme-switch" role="radiogroup" aria-label="Theme">
+    <button type="button" class="theme-option" data-theme-choice="light" role="radio" aria-checked="false">Light</button>
+    <button type="button" class="theme-option" data-theme-choice="dark" role="radio" aria-checked="false">Dark</button>
+    <button type="button" class="theme-option" data-theme-choice="system" role="radio" aria-checked="false">System</button>
+  </div>
+</section>
+
+<script src="/public/js/theme.js"></script>
+<%- include('partials/footer') %>

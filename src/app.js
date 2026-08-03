@@ -34,6 +34,7 @@ app.use(authRouter);
 app.use('/uploads', requireAuth, express.static(path.join(process.cwd(), process.env.UPLOADS_DIR || './uploads')));
 
 app.get('/', (req, res) => res.redirect('/vehicles'));
+app.get('/settings', requireAuth, (req, res) => res.render('settings'));
 app.use('/vehicles', requireAuth, vehiclesRouter);
 app.use('/vehicles/:vehicleId/records', requireAuth, serviceRecordsRouter);
 app.use('/vehicles/:vehicleId/mileage-logs', requireAuth, mileageLogsRouter);

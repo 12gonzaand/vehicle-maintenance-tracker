@@ -1,0 +1,14 @@
+<%
+  const _raw = typeof mileage === 'number' ? mileage : null;
+  const _digits = _raw != null ? String(_raw).padStart(6, '0').split('') : null;
+  const _sigCount = _raw != null ? String(_raw).length : 0;
+  const _sizeClass = typeof size !== 'undefined' && size === 'sm' ? 'odometer-sm' : '';
+%>
+<span class="odometer <%= _sizeClass %>" aria-label="<%= _raw != null ? _raw.toLocaleString() + ' miles' : 'No mileage recorded' %>">
+  <% if (_digits) { %>
+    <% _digits.forEach((d, i) => { %><span class="odometer-digit<%= i < (6 - _sigCount) ? ' is-leading' : '' %>"><%= d %></span><% }) %>
+  <% } else { %>
+    <% for (let i = 0; i < 6; i++) { %><span class="odometer-digit is-empty">&ndash;</span><% } %>
+  <% } %>
+  <span class="odometer-unit">mi</span>
+</span>
