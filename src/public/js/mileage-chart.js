@@ -28,8 +28,8 @@
   const yScale = (m) => height - padding - ((m - minMiles) / ((maxMiles - minMiles) || 1)) * (height - padding * 2);
 
   const styles = getComputedStyle(document.documentElement);
-  const lineColor = styles.getPropertyValue('--primary').trim() || '#2563eb';
-  const textColor = styles.getPropertyValue('--text-muted').trim() || '#6b6b73';
+  const lineColor = styles.getPropertyValue('--orange').trim() || '#ff6a1a';
+  const textColor = styles.getPropertyValue('--ink-muted').trim() || '#8d9297';
 
   ctx.strokeStyle = lineColor;
   ctx.lineWidth = 2;
@@ -52,7 +52,7 @@
   });
 
   ctx.fillStyle = textColor;
-  ctx.font = '11px sans-serif';
+  ctx.font = '11px "IBM Plex Mono", monospace';
   ctx.fillText(minMiles.toLocaleString() + ' mi', 2, height - padding);
   ctx.fillText(maxMiles.toLocaleString() + ' mi', 2, padding);
 })();

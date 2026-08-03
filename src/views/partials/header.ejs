@@ -3,7 +3,25 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <script>
+    (function () {
+      var DARK = '#17191b', LIGHT = '#f2ede0';
+      var stored = null;
+      try { stored = localStorage.getItem('theme'); } catch (e) {}
+      if (stored === 'light' || stored === 'dark') document.documentElement.setAttribute('data-theme', stored);
+      var resolved = stored === 'light' || stored === 'dark'
+        ? stored
+        : (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+      document.addEventListener('DOMContentLoaded', function () {
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', resolved === 'light' ? LIGHT : DARK);
+      });
+    })();
+  </script>
   <title><%= typeof title !== 'undefined' ? title : 'Maintenance Tracker' %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/public/css/style.css">
   <link rel="apple-touch-icon" href="/public/icons/apple-touch-icon.png">
   <link rel="icon" type="image/svg+xml" href="/public/icons/favicon.svg">
@@ -12,15 +30,23 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Maintenance">
-  <meta name="theme-color" content="#171717">
+  <meta name="theme-color" content="#17191b">
 </head>
 <body>
-  <header class="site-header page-header">
+  <header class="site-header">
     <a href="/vehicles" class="brand">Maintenance Tracker</a>
     <% if (typeof session !== 'undefined' && session && session.authenticated) { %>
-      <form method="post" action="/logout" class="inline-form">
-        <button type="submit" class="btn btn-small">Log Out</button>
-      </form>
+      <div class="header-actions">
+        <a href="/settings" class="icon-btn" aria-label="Settings" title="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 3.5v2M12 18.5v2M20.5 12h-2M5.5 12h-2M17.8 6.2l-1.4 1.4M7.6 16.4l-1.4 1.4M17.8 17.8l-1.4-1.4M7.6 7.6 6.2 6.2"/>
+          </svg>
+        </a>
+        <form method="post" action="/logout" class="inline-form">
+          <button type="submit" class="btn btn-small">Log Out</button>
+        </form>
+      </div>
     <% } %>
   </header>
   <main class="container">

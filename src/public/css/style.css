@@ -1,50 +1,161 @@
 :root {
-  --bg: #f7f7f8;
-  --surface: #ffffff;
-  --border: #e2e2e6;
-  --text: #1c1c1f;
-  --text-muted: #6b6b73;
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --danger: #dc2626;
-  --danger-hover: #b91c1c;
-  --radius: 8px;
+  /* dark — default */
+  --bg: #17191b;
+  --bg-rgb: 23, 25, 27;
+  --surface: #1f2225;
+  --surface-2: #2a2e32;
+  --hairline: #34383c;
+  --border-strong: #3a3f44;
+  --ink: #eae7df;
+  --ink-muted: #8d9297;
+  --ink-faint: #5b6065;
+  --input-bg: #17191b;
+  --orange: #ff6a1a;
+  --orange-dark: #e0570f;
+  --amber: #e8a33d;
+  --ok-green: #4f9a63;
+  --danger: #d1483a;
+  --danger-dark: #b53a2e;
+  --radius: 3px;
+
+  /* fixed instrument hardware — same in light or dark, like a real gauge doesn't relight with the room */
+  --instrument-bg: #1c1e21;
+  --instrument-bg-2: #26282b;
+  --instrument-fg: #f3efe3;
+  --instrument-fg-dim: #74797e;
+  --instrument-border: #0c0d0f;
+  --plate-bg: #ece7d8;
+  --plate-fg: #1c1e21;
+  --plate-border: #b7ae94;
+}
+
+:root[data-theme="light"] {
+  --bg: #f2ede0;
+  --bg-rgb: 242, 237, 224;
+  --surface: #fbf9f2;
+  --surface-2: #e7e0cd;
+  --hairline: #d9d0ba;
+  --border-strong: #c8bd9f;
+  --ink: #211f18;
+  --ink-muted: #6b6656;
+  --ink-faint: #a39d89;
+  --input-bg: #ffffff;
+  --amber: #a06a1f;
+  --ok-green: #3f7a4f;
+  --danger: #b23b2c;
+  --danger-dark: #96301f;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --bg: #f2ede0;
+    --bg-rgb: 242, 237, 224;
+    --surface: #fbf9f2;
+    --surface-2: #e7e0cd;
+    --hairline: #d9d0ba;
+    --border-strong: #c8bd9f;
+    --ink: #211f18;
+    --ink-muted: #6b6656;
+    --ink-faint: #a39d89;
+    --input-bg: #ffffff;
+    --amber: #a06a1f;
+    --ok-green: #3f7a4f;
+    --danger: #b23b2c;
+    --danger-dark: #96301f;
+  }
 }
 
 * { box-sizing: border-box; }
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background: var(--bg);
-  color: var(--text);
+@media (prefers-reduced-motion: no-preference) {
+  .btn, .card, .odometer-digit, .icon-btn, .theme-option { transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease; }
 }
 
+body {
+  margin: 0;
+  font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+h1, h2, h3 {
+  font-family: 'Barlow Condensed', 'IBM Plex Sans', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* ---------- header ---------- */
+
 .site-header {
-  padding: 1rem 1.5rem;
-  padding-top: calc(1rem + env(safe-area-inset-top));
+  padding: 0.9rem 1.25rem;
+  padding-top: calc(0.9rem + env(safe-area-inset-top));
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--hairline);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .brand {
-  font-weight: 600;
-  font-size: 1.1rem;
-  color: var(--text);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 1.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.brand::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  background: var(--orange);
+  display: inline-block;
+}
+
+.header-actions { display: flex; align-items: center; gap: 0.5rem; }
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border-strong);
+  border-radius: 2px;
+  background: var(--surface);
+  color: var(--ink-muted);
   text-decoration: none;
 }
+.icon-btn:hover { color: var(--orange); border-color: var(--orange); }
+.icon-btn svg { width: 17px; height: 17px; }
 
 .container {
   max-width: 960px;
   margin: 0 auto;
-  padding: 1.5rem;
+  padding: 1.5rem 1.25rem 3rem;
 }
 
-h1 { margin: 0 0 0.25rem; }
-h2 { margin-top: 0; }
+h1 { margin: 0 0 0.25rem; font-size: 1.9rem; }
+h2 { margin-top: 0; font-size: 1.2rem; }
 
-.subtitle, .mileage-current { color: var(--text-muted); margin: 0.25rem 0; }
-.mileage-current { font-weight: 600; color: var(--text); }
+.subtitle, .mileage-current { color: var(--ink-muted); margin: 0.25rem 0; }
+.subtitle { font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; letter-spacing: 0.01em; }
 
 .page-header {
   display: flex;
@@ -52,30 +163,51 @@ h2 { margin-top: 0; }
   justify-content: space-between;
   align-items: flex-start;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .page-actions, .toggle-link { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
 
-.btn {
-  display: inline-block;
-  padding: 0.5rem 0.9rem;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
+.toggle-link a {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
   text-decoration: none;
-  font-size: 0.9rem;
+  border-bottom: 1px dotted var(--ink-faint);
+}
+.toggle-link a:hover { color: var(--orange); border-color: var(--orange); }
+
+/* ---------- buttons ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.55rem 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   cursor: pointer;
 }
+.btn:hover { border-color: var(--ink-muted); }
 
-.btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
-.btn-primary:hover { background: var(--primary-hover); }
-.btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; }
-.btn-danger:hover { background: var(--danger-hover); }
-.btn-small { padding: 0.25rem 0.5rem; font-size: 0.8rem; }
+.btn-primary { background: var(--orange); border-color: var(--orange); color: #1a0d04; }
+.btn-primary:hover { background: var(--orange-dark); border-color: var(--orange-dark); }
+.btn-danger { background: transparent; border-color: var(--danger); color: var(--danger); }
+.btn-danger:hover { background: var(--danger); color: #1a0d04; }
+.btn-small { padding: 0.3rem 0.6rem; font-size: 0.8rem; }
 
 .inline-form { display: inline; margin: 0; }
+
+/* ---------- vehicle grid ---------- */
 
 .card-grid {
   display: grid;
@@ -85,56 +217,180 @@ h2 { margin-top: 0; }
 
 .card {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--hairline);
   border-radius: var(--radius);
   overflow: hidden;
   text-decoration: none;
-  color: var(--text);
+  color: var(--ink);
+  display: block;
 }
+.card:hover { border-color: var(--orange); }
 
-.vehicle-card.archived { opacity: 0.6; }
+.vehicle-card.archived { opacity: 0.55; }
 
 .vehicle-thumb {
   width: 100%;
   height: 140px;
   object-fit: cover;
-  background: var(--bg);
+  background: var(--surface-2);
+  display: block;
 }
 
 .vehicle-thumb.placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.5rem;
+  color: var(--ink-faint);
 }
+.vehicle-thumb.placeholder svg { width: 40px; height: 40px; }
 
-.vehicle-card-body { padding: 0.75rem 1rem; }
-.vehicle-card-body h3 { margin: 0 0 0.25rem; }
-.vehicle-card-body p { margin: 0.15rem 0; color: var(--text-muted); font-size: 0.9rem; }
-.vehicle-card-body .mileage { font-weight: 600; color: var(--text); }
+.vehicle-card-body { padding: 0.85rem 1rem 1rem; }
+.vehicle-card-body h3 {
+  margin: 0 0 0.3rem;
+  font-size: 1.15rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.vehicle-card-body p { margin: 0.15rem 0; color: var(--ink-muted); font-size: 0.85rem; font-family: 'IBM Plex Mono', monospace; }
 
 .badge {
-  font-size: 0.7rem;
-  padding: 0.1rem 0.4rem;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--text-muted);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem;
+  padding: 0.15rem 0.4rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 2px;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.vehicle-photo {
-  max-width: 100%;
-  max-height: 300px;
-  object-fit: cover;
-  border-radius: var(--radius);
-  margin-bottom: 1rem;
+/* ---------- odometer (fixed instrument hardware, not theme-dependent) ---------- */
+
+.odometer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.15rem;
 }
+.odometer-digit {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.05rem;
+  width: 1.35em;
+  text-align: center;
+  background: var(--instrument-bg);
+  color: var(--instrument-fg);
+  border: 1px solid var(--instrument-border);
+  border-radius: 2px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+  padding: 0.15rem 0;
+}
+.odometer-digit.is-leading { color: var(--instrument-fg-dim); }
+.odometer-digit.is-empty { color: var(--instrument-fg-dim); background: var(--instrument-bg-2); }
+.odometer-unit {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.odometer-sm .odometer-digit { font-size: 0.78rem; width: 1.1em; padding: 0.1rem 0; }
+.odometer-sm .odometer-unit { font-size: 0.65rem; }
+
+/* ---------- vehicle hero ---------- */
+
+.vehicle-hero {
+  position: relative;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  background: var(--surface);
+}
+.vehicle-hero-photo {
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+  display: block;
+}
+.vehicle-hero-noimg {
+  width: 100%;
+  height: 160px;
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-faint);
+}
+.vehicle-hero-noimg svg { width: 56px; height: 56px; }
+.vehicle-hero-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(var(--bg-rgb), 0.96) 0%, rgba(var(--bg-rgb), 0.55) 45%, transparent 80%);
+  pointer-events: none;
+}
+.vehicle-hero-body {
+  position: relative;
+  padding: 1rem 1.1rem 1.1rem;
+}
+.vehicle-hero.has-photo .vehicle-hero-body {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 1.5rem 1.1rem 1.1rem;
+}
+.vehicle-hero h1 { margin-bottom: 0.15rem; }
+
+.vin-plate {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  background: var(--plate-bg);
+  color: var(--plate-fg);
+  border: 1px solid var(--plate-border);
+  border-radius: 2px;
+  padding: 0.35rem 0.55rem;
+  text-align: right;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+.vin-plate .vin-label {
+  display: block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  color: #6b6555;
+  text-transform: uppercase;
+}
+.vin-plate .vin-value {
+  display: block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+}
+
+.vehicle-hero-actions {
+  padding: 0.85rem 1.1rem;
+  border-top: 1px solid var(--hairline);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* ---------- sections ---------- */
 
 .section {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--hairline);
+  border-top: 2px solid var(--orange);
   border-radius: var(--radius);
-  padding: 1.25rem;
+  padding: 1.25rem 1.25rem 1.4rem;
   margin-bottom: 1.5rem;
 }
 
@@ -142,49 +398,109 @@ h2 { margin-top: 0; }
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+}
+.section-header h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
 }
 
-.form { display: flex; flex-direction: column; gap: 0.75rem; max-width: 480px; }
+/* ---------- theme switch ---------- */
+
+.theme-switch {
+  display: inline-flex;
+  border: 1px solid var(--border-strong);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.theme-option {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.55rem 1.1rem;
+  background: var(--surface);
+  color: var(--ink-muted);
+  border: none;
+  border-right: 1px solid var(--border-strong);
+  cursor: pointer;
+}
+.theme-option:last-child { border-right: none; }
+.theme-option:hover:not(.is-active) { color: var(--ink); }
+.theme-option.is-active { background: var(--orange); color: #1a0d04; }
+
+/* ---------- forms ---------- */
+
+.form { display: flex; flex-direction: column; gap: 0.9rem; max-width: 480px; }
 .form-inline { flex-direction: row; flex-wrap: wrap; align-items: flex-end; max-width: none; }
-.filter-form { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.filter-form { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.1rem; }
 
 .form label {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.85rem;
-  color: var(--text-muted);
+  gap: 0.3rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
 }
 
 .form-row { display: flex; gap: 0.75rem; }
 .form-row label { flex: 1; }
 
 input, select, textarea {
-  padding: 0.5rem;
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid var(--border-strong);
+  background: var(--input-bg);
+  color: var(--ink);
+  border-radius: 2px;
   font-size: 16px;
-  font-family: inherit;
+  font-family: 'IBM Plex Sans', sans-serif;
 }
+input::placeholder, textarea::placeholder { color: var(--ink-faint); }
+input:focus, select:focus, textarea:focus { border-color: var(--orange); }
 
-.form-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+.form-actions { display: flex; gap: 0.5rem; margin-top: 0.25rem; }
+
+/* ---------- tables ---------- */
 
 .table-scroll { overflow-x: auto; margin-bottom: 1rem; }
 .records-table { width: 100%; border-collapse: collapse; min-width: 480px; }
 .records-table th, .records-table td {
   text-align: left;
-  padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid var(--border);
-  font-size: 0.9rem;
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 0.88rem;
 }
-.records-table th { color: var(--text-muted); font-weight: 500; }
+.records-table th {
+  color: var(--ink-muted);
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 500;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.records-table td { font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; }
+.records-table td:first-child { font-family: 'IBM Plex Sans', sans-serif; }
 .clickable-row { cursor: pointer; }
-.clickable-row:hover { background: var(--bg); }
+.clickable-row:hover { background: var(--surface-2); }
 
-.detail-list { display: grid; grid-template-columns: 140px 1fr; gap: 0.5rem 1rem; margin-bottom: 1.5rem; }
-.detail-list dt { color: var(--text-muted); }
-.detail-list dd { margin: 0; }
+.detail-list { display: grid; grid-template-columns: 140px 1fr; gap: 0.6rem 1rem; margin-bottom: 1.5rem; }
+.detail-list dt {
+  color: var(--ink-muted);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-top: 0.1rem;
+}
+.detail-list dd { margin: 0; font-family: 'IBM Plex Mono', monospace; }
+
+/* ---------- files ---------- */
 
 .file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
 .file-card { text-align: center; }
@@ -195,13 +511,15 @@ input, select, textarea {
   width: 100%;
   height: 120px;
   object-fit: cover;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg);
+  border: 1px solid var(--hairline);
+  border-radius: 2px;
+  background: var(--input-bg);
   font-size: 2rem;
   text-decoration: none;
 }
-.file-name { font-size: 0.8rem; color: var(--text-muted); word-break: break-all; margin: 0.4rem 0; }
+.file-name { font-size: 0.75rem; color: var(--ink-muted); word-break: break-all; margin: 0.4rem 0; font-family: 'IBM Plex Mono', monospace; }
+
+/* ---------- auth ---------- */
 
 .auth-page {
   display: flex;
@@ -211,28 +529,46 @@ input, select, textarea {
 
 .auth-card {
   width: 100%;
-  max-width: 320px;
+  max-width: 340px;
   text-align: center;
+}
+
+.auth-card::before {
+  content: "GARAGE ACCESS";
+  display: block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.15em;
+  color: var(--orange);
+  margin-bottom: 0.6rem;
 }
 
 .auth-card .form { max-width: none; text-align: left; }
 .auth-card .form-actions { justify-content: center; }
-.auth-error { color: var(--danger); margin: 0 0 0.75rem; }
+.auth-card .form-actions .btn { width: 100%; justify-content: center; }
+.auth-error {
+  color: var(--danger);
+  margin: 0 0 0.75rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.85rem;
+}
 
-.empty-state { color: var(--text-muted); font-style: italic; }
-.breadcrumb { margin: 0 0 0.5rem; }
-.breadcrumb a { color: var(--text-muted); text-decoration: none; }
+.empty-state { color: var(--ink-muted); font-style: italic; }
+.breadcrumb { margin: 0 0 0.75rem; }
+.breadcrumb a {
+  color: var(--ink-muted);
+  text-decoration: none;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.breadcrumb a:hover { color: var(--orange); }
 
 @media (max-width: 480px) {
   .form-row { flex-direction: column; }
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #17181c;
-    --surface: #1f2025;
-    --border: #33343a;
-    --text: #e7e7ea;
-    --text-muted: #96969e;
-  }
+  .vehicle-hero-photo { height: 190px; }
+  .vin-plate { position: static; margin-top: 0.75rem; text-align: left; display: inline-block; }
+  .vehicle-hero.has-photo .vehicle-hero-body { position: relative; padding: 1rem 1rem 1.1rem; }
+  .vehicle-hero-scrim { display: none; }
 }
