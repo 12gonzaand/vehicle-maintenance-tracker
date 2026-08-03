@@ -21,7 +21,7 @@ app.use(session({
   secret: ensureSessionSecret(),
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 }
+  cookie: { httpOnly: true, sameSite: 'lax', maxAge: 30 * 24 * 60 * 60 * 1000 }
 }));
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use((req, res, next) => {
