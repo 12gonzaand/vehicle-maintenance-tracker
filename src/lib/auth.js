@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
-const db = require('../db');
+const User = require('../models/user');
 
 const ENV_LOCAL_PATH = path.join(__dirname, '..', '..', '.env.local');
 
@@ -16,53 +16,21 @@ function ensureSessionSecret() {
   return secret;
 }
 
-function getPasswordHash() {
-  const row = db.prepare(`SELECT value FROM settings WHERE key = 'auth_password_hash'`).get();
-  return row && row.value ? row.value : null;
-}
-
-function getUsername() {
-  const row = db.prepare(`SELECT value FROM settings WHERE key = 'auth_username'`).get();
-  return row && row.value ? row.value : null;
-}
-
-function isPasswordSet() {
-  return Boolean(getPasswordHash());
-}
-
-function setUsername(username) {
-  db.prepare(`
-    INSERT INTO settings (key, value) VALUES ('auth_username', ?)
-    ON CONFLICT(key) DO UPDATE SET value = excluded.value
-  `).run(username.trim());
-}
-
-function setPassword(password) {
-  const hash = bcrypt.hashSync(password, 12);
-  db.prepare(`
-    INSERT INTO settings (key, value) VALUES ('auth_password_hash', ?)
-    ON CONFLICT(key) DO UPDATE SET value = excluded.value
-  `).run(hash);
-}
-
-function verifyPassword(password) {
-  const hash = getPasswordHash();
-  if (!hash) return false;
-  return bcrypt.compareSync(password, hash);
+function hashPassword(password) {
+  return bcrypt.hashSync(password, 12);
 }
 
 // Precomputed at startup so a bcrypt compare always runs below, even when the
-// username is wrong or no password is set yet — otherwise a wrong username
-// returns near-instantly while a wrong password takes ~100ms, letting an
-// attacker fingerprint the valid username by timing responses.
+// username doesn't match any account — otherwise a wrong username returns
+// near-instantly while a wrong password takes ~100ms, letting an attacker
+// fingerprint valid usernames by timing responses.
 const DUMMY_HASH = bcrypt.hashSync(crypto.randomBytes(32).toString('hex'), 12);
 
 function verifyCredentials(username, password) {
-  const storedUsername = getUsername();
-  const hash = getPasswordHash() || DUMMY_HASH;
-  const usernameOk = typeof username === 'string' && Boolean(storedUsername) && username.trim() === storedUsername;
+  const user = User.findByUsername(username);
+  const hash = (user && user.password_hash) || DUMMY_HASH;
   const passwordOk = typeof password === 'string' && bcrypt.compareSync(password, hash);
-  return usernameOk && passwordOk;
+  return user && passwordOk ? user : null;
 }
 
 // Per-IP login lockout: 5 failed attempts locks that IP out for 10 minutes.
@@ -108,12 +76,22 @@ function isSafeReturnTo(url) {
 }
 
 function requireAuth(req, res, next) {
-  if (req.session && req.session.authenticated) return next();
+  const userId = req.session && req.session.userId;
+  if (userId) {
+    const user = User.find(userId);
+    if (user) {
+      req.user = user;
+      res.locals.currentUser = user;
+      return next();
+    }
+    // Session points at an account that no longer exists (e.g. deleted).
+    return req.session.destroy(() => res.redirect('/login'));
+  }
   if (isSafeReturnTo(req.originalUrl)) req.session.returnTo = req.originalUrl;
   res.redirect('/login');
 }
 
 module.exports = {
-  ensureSessionSecret, isPasswordSet, getUsername, setUsername, setPassword, verifyPassword,
-  verifyCredentials, requireAuth, isSafeReturnTo, checkLockout, recordFailedLogin, clearLoginAttempts
+  ensureSessionSecret, hashPassword, verifyCredentials, requireAuth, isSafeReturnTo,
+  checkLockout, recordFailedLogin, clearLoginAttempts
 };

@@ -129,6 +129,13 @@ h1, h2, h3 {
 }
 
 .header-actions { display: flex; align-items: center; gap: 0.5rem; }
+.current-username {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
+}
 
 .icon-btn {
   display: inline-flex;
@@ -601,6 +608,12 @@ input:focus, select:focus, textarea:focus { border-color: var(--orange); }
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.85rem;
 }
+.auth-alt-link {
+  margin: 1rem 0 0;
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+}
+.auth-alt-link a { color: var(--orange); }
 
 .empty-state { color: var(--ink-muted); font-style: italic; }
 .breadcrumb { margin: 0 0 0.75rem; }

@@ -1,23 +1,23 @@
 const db = require('../db');
 
 const Vehicle = {
-  all({ includeArchived = false } = {}) {
+  all({ userId, includeArchived = false } = {}) {
     const query = includeArchived
-      ? 'SELECT * FROM vehicles ORDER BY archived ASC, name ASC'
-      : 'SELECT * FROM vehicles WHERE archived = 0 ORDER BY name ASC';
-    return db.prepare(query).all();
+      ? 'SELECT * FROM vehicles WHERE user_id = ? ORDER BY archived ASC, name ASC'
+      : 'SELECT * FROM vehicles WHERE user_id = ? AND archived = 0 ORDER BY name ASC';
+    return db.prepare(query).all(userId);
   },
 
   find(id) {
     return db.prepare('SELECT * FROM vehicles WHERE id = ?').get(id);
   },
 
-  create({ name, year, make, model, vin, current_mileage }) {
+  create({ user_id, name, year, make, model, vin, current_mileage }) {
     const stmt = db.prepare(`
-      INSERT INTO vehicles (name, year, make, model, vin, current_mileage)
-      VALUES (@name, @year, @make, @model, @vin, @current_mileage)
+      INSERT INTO vehicles (user_id, name, year, make, model, vin, current_mileage)
+      VALUES (@user_id, @name, @year, @make, @model, @vin, @current_mileage)
     `);
-    const result = stmt.run({ name, year, make, model, vin, current_mileage });
+    const result = stmt.run({ user_id, name, year, make, model, vin, current_mileage });
     return this.find(result.lastInsertRowid);
   },
 

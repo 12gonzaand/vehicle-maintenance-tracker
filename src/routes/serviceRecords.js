@@ -8,17 +8,32 @@ const ServiceType = require('../models/serviceType');
 const Vehicle = require('../models/vehicle');
 const { upload, uploadStaged, UPLOADS_DIR } = require('../middleware/upload');
 
+// req.vehicle is already set by the app.js-level loadOwnedVehicle middleware
+// (vehicleId isn't declared in this router's own paths, only merged in from
+// the parent mount, so router.param('vehicleId', ...) here would never fire).
+router.param('recordId', (req, res, next, recordId) => {
+  const record = ServiceRecord.find(recordId);
+  if (!record || record.vehicle_id !== req.vehicle.id) return res.status(404).send('Not found');
+  req.record = record;
+  next();
+});
+
+router.param('fileId', (req, res, next, fileId) => {
+  const file = ServiceFile.find(fileId);
+  if (!file || file.service_record_id !== req.record.id) return res.status(404).send('Not found');
+  req.file_ = file;
+  next();
+});
+
 router.get('/new', (req, res) => {
-  const vehicle = Vehicle.find(req.params.vehicleId);
-  if (!vehicle) return res.status(404).send('Vehicle not found');
-  res.render('serviceRecords/form', { vehicle, record: null, serviceTypes: ServiceType.all() });
+  res.render('serviceRecords/form', { vehicle: req.vehicle, record: null, serviceTypes: ServiceType.all(req.user.id) });
 });
 
 router.post('/', uploadStaged.array('files'), (req, res) => {
-  const vehicleId = req.params.vehicleId;
+  const vehicleId = req.vehicle.id;
   const { service_type, service_date, mileage, cost, notes, shop } = req.body;
 
-  ServiceType.ensure(service_type);
+  ServiceType.ensure(req.user.id, service_type);
 
   const record = ServiceRecord.create(vehicleId, {
     service_type,
@@ -50,27 +65,21 @@ router.post('/', uploadStaged.array('files'), (req, res) => {
 });
 
 router.get('/:recordId', (req, res) => {
-  const vehicle = Vehicle.find(req.params.vehicleId);
-  const record = ServiceRecord.find(req.params.recordId);
-  if (!vehicle || !record) return res.status(404).send('Not found');
-  const files = ServiceFile.allForRecord(record.id);
-  res.render('serviceRecords/detail', { vehicle, record, files });
+  const files = ServiceFile.allForRecord(req.record.id);
+  res.render('serviceRecords/detail', { vehicle: req.vehicle, record: req.record, files });
 });
 
 router.get('/:recordId/edit', (req, res) => {
-  const vehicle = Vehicle.find(req.params.vehicleId);
-  const record = ServiceRecord.find(req.params.recordId);
-  if (!vehicle || !record) return res.status(404).send('Not found');
-  res.render('serviceRecords/form', { vehicle, record, serviceTypes: ServiceType.all() });
+  res.render('serviceRecords/form', { vehicle: req.vehicle, record: req.record, serviceTypes: ServiceType.all(req.user.id) });
 });
 
 router.post('/:recordId', (req, res) => {
-  const vehicleId = req.params.vehicleId;
+  const vehicleId = req.vehicle.id;
   const { service_type, service_date, mileage, cost, notes, shop } = req.body;
 
-  ServiceType.ensure(service_type);
+  ServiceType.ensure(req.user.id, service_type);
 
-  const record = ServiceRecord.update(req.params.recordId, {
+  const record = ServiceRecord.update(req.record.id, {
     service_type,
     service_date,
     mileage: mileage ? Number(mileage) : null,
@@ -84,16 +93,16 @@ router.post('/:recordId', (req, res) => {
 });
 
 router.post('/:recordId/delete', (req, res) => {
-  const vehicleId = req.params.vehicleId;
-  const recordDir = path.join(UPLOADS_DIR, 'vehicles', String(vehicleId), 'records', String(req.params.recordId));
+  const vehicleId = req.vehicle.id;
+  const recordDir = path.join(UPLOADS_DIR, 'vehicles', String(vehicleId), 'records', String(req.record.id));
   fs.rm(recordDir, { recursive: true, force: true }, () => {});
-  ServiceRecord.delete(req.params.recordId);
+  ServiceRecord.delete(req.record.id);
   res.redirect(`/vehicles/${vehicleId}`);
 });
 
 router.post('/:recordId/files', upload.array('files'), (req, res) => {
-  const vehicleId = req.params.vehicleId;
-  const recordId = req.params.recordId;
+  const vehicleId = req.vehicle.id;
+  const recordId = req.record.id;
   for (const file of req.files || []) {
     ServiceFile.create(recordId, {
       original_filename: file.originalname,
@@ -106,12 +115,9 @@ router.post('/:recordId/files', upload.array('files'), (req, res) => {
 });
 
 router.post('/:recordId/files/:fileId/delete', (req, res) => {
-  const file = ServiceFile.find(req.params.fileId);
-  if (file) {
-    fs.rm(path.join(UPLOADS_DIR, file.stored_path), { force: true }, () => {});
-    ServiceFile.delete(file.id);
-  }
-  res.redirect(`/vehicles/${req.params.vehicleId}/records/${req.params.recordId}`);
+  fs.rm(path.join(UPLOADS_DIR, req.file_.stored_path), { force: true }, () => {});
+  ServiceFile.delete(req.file_.id);
+  res.redirect(`/vehicles/${req.vehicle.id}/records/${req.record.id}`);
 });
 
 module.exports = router;

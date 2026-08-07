@@ -1,8 +1,10 @@
 #!/usr/bin/env node
-// Sets (or resets) the app login username/password directly against the database.
+// Resets an existing account's password directly against the database.
 // Run from the server: npm run reset-password
+// This does NOT create accounts — new accounts are self-serve via /register.
 const readline = require('readline');
-const { setUsername, setPassword } = require('../src/lib/auth');
+const { hashPassword } = require('../src/lib/auth');
+const User = require('../src/models/user');
 
 async function main() {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -10,6 +12,14 @@ async function main() {
 
   process.stdout.write('Username: ');
   const username = (await lines.next()).value;
+
+  const user = User.findByUsername(username);
+  if (!user) {
+    rl.close();
+    console.error(`No account named "${username}". New accounts are created at /register, not here.`);
+    process.exitCode = 1;
+    return;
+  }
 
   process.stdout.write('New password (min 8 chars, visible as you type): ');
   const password = (await lines.next()).value;
@@ -19,11 +29,6 @@ async function main() {
 
   rl.close();
 
-  if (!username || !username.trim()) {
-    console.error('Username is required.');
-    process.exitCode = 1;
-    return;
-  }
   if (!password || password.length < 8) {
     console.error('Password must be at least 8 characters.');
     process.exitCode = 1;
@@ -35,9 +40,8 @@ async function main() {
     return;
   }
 
-  setUsername(username);
-  setPassword(password);
-  console.log('\nUsername and password set.');
+  User.updatePassword(user.id, hashPassword(password));
+  console.log(`\nPassword reset for "${user.username}".`);
   console.log('If the app is currently running, restart it to log out any existing sessions:');
   console.log('  systemctl --user restart maintenance-tracker.service');
 }
