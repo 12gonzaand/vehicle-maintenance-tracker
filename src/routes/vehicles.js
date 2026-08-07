@@ -3,6 +3,7 @@ const router = express.Router();
 const Vehicle = require('../models/vehicle');
 const ServiceRecord = require('../models/serviceRecord');
 const MileageLog = require('../models/mileageLog');
+const FuelLog = require('../models/fuelLog');
 const ServiceType = require('../models/serviceType');
 const { uploadVehiclePhoto } = require('../middleware/upload');
 
@@ -36,12 +37,14 @@ router.get('/:id', (req, res) => {
   const { sortBy, order, serviceType } = req.query;
   const records = ServiceRecord.allForVehicle(vehicle.id, { sortBy, order, serviceType });
   const mileageHistory = MileageLog.combinedHistory(vehicle.id);
+  const fuelLogs = FuelLog.allForVehicle(vehicle.id);
   const serviceTypes = ServiceType.all();
 
   res.render('vehicles/detail', {
     vehicle,
     records,
     mileageHistory,
+    fuelLogs,
     serviceTypes,
     query: req.query
   });

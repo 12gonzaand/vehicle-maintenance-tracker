@@ -132,5 +132,70 @@
   <% } %>
 </section>
 
+<section class="section">
+  <div class="section-header">
+    <h2>Fuel Log</h2>
+  </div>
+
+  <form method="post" action="/vehicles/<%= vehicle.id %>/fuel-logs" class="form form-inline">
+    <label>Date
+      <input type="date" name="fill_date" required>
+    </label>
+    <label>Mileage
+      <input type="number" name="mileage" required>
+    </label>
+    <label>Grade
+      <select name="fuel_grade">
+        <option value="Regular (87)">Regular (87)</option>
+        <option value="Mid-Grade (89)">Mid-Grade (89)</option>
+        <option value="Premium (91)">Premium (91)</option>
+        <option value="Premium (93)">Premium (93)</option>
+        <option value="Diesel">Diesel</option>
+        <option value="E85">E85</option>
+      </select>
+    </label>
+    <label>Gallons
+      <input type="number" name="gallons" step="0.001" min="0" required>
+    </label>
+    <label>Cost
+      <input type="number" name="cost" step="0.01" min="0">
+    </label>
+    <button type="submit" class="btn">Log Fill-Up</button>
+  </form>
+
+  <% if (fuelLogs.length === 0) { %>
+    <p class="empty-state">No fuel log entries yet.</p>
+  <% } else { %>
+  <div class="table-scroll">
+  <table class="records-table">
+    <thead>
+      <tr><th>Date</th><th>Mileage</th><th>Grade</th><th>Gallons</th><th>Cost</th><th>$/gal</th><th>MPG</th><th></th></tr>
+    </thead>
+    <tbody>
+      <% fuelLogs.forEach(f => { %>
+        <tr>
+          <td><%= f.fill_date %></td>
+          <td><%= f.mileage.toLocaleString() %></td>
+          <td><%= f.fuel_grade || '—' %></td>
+          <td><%= f.gallons.toFixed(3) %></td>
+          <td><%= f.cost != null ? '$' + f.cost.toFixed(2) : '—' %></td>
+          <td><%= f.cost != null && f.gallons > 0 ? '$' + (f.cost / f.gallons).toFixed(3) : '—' %></td>
+          <td><%= f.mpg != null ? f.mpg.toFixed(1) : '—' %></td>
+          <td>
+            <form method="post" action="/vehicles/<%= vehicle.id %>/fuel-logs/<%= f.id %>/delete" class="inline-form" onsubmit="return confirm('Delete this fuel log entry?');">
+              <button type="submit" class="btn btn-danger btn-small">Delete</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  </div>
+  <canvas id="fuel-efficiency-chart" height="160"
+    data-points='<%= JSON.stringify(fuelLogs.map(f => ({ date: f.fill_date, mpg: f.mpg }))) %>'></canvas>
+  <% } %>
+</section>
+
 <script src="/public/js/mileage-chart.js"></script>
+<script src="/public/js/fuel-efficiency-chart.js"></script>
 <%- include('../partials/footer') %>

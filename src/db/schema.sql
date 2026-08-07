@@ -65,6 +65,20 @@ CREATE TABLE IF NOT EXISTS mileage_logs (
 CREATE INDEX IF NOT EXISTS idx_mileage_logs_vehicle_date
   ON mileage_logs(vehicle_id, log_date);
 
+CREATE TABLE IF NOT EXISTS fuel_logs (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  vehicle_id  INTEGER NOT NULL REFERENCES vehicles(id) ON DELETE CASCADE,
+  fill_date   TEXT NOT NULL,
+  mileage     INTEGER NOT NULL,
+  gallons     REAL NOT NULL,
+  cost        REAL,
+  fuel_grade  TEXT,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_fuel_logs_vehicle_mileage
+  ON fuel_logs(vehicle_id, mileage);
+
 CREATE TABLE IF NOT EXISTS reminder_rules (
   id              INTEGER PRIMARY KEY AUTOINCREMENT,
   vehicle_id      INTEGER NOT NULL REFERENCES vehicles(id) ON DELETE CASCADE,

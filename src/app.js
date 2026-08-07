@@ -7,6 +7,7 @@ const authRouter = require('./routes/auth');
 const vehiclesRouter = require('./routes/vehicles');
 const serviceRecordsRouter = require('./routes/serviceRecords');
 const mileageLogsRouter = require('./routes/mileageLogs');
+const fuelLogsRouter = require('./routes/fuelLogs');
 const { ensureSessionSecret, requireAuth } = require('./lib/auth');
 
 const app = express();
@@ -38,6 +39,7 @@ app.get('/settings', requireAuth, (req, res) => res.render('settings'));
 app.use('/vehicles', requireAuth, vehiclesRouter);
 app.use('/vehicles/:vehicleId/records', requireAuth, serviceRecordsRouter);
 app.use('/vehicles/:vehicleId/mileage-logs', requireAuth, mileageLogsRouter);
+app.use('/vehicles/:vehicleId/fuel-logs', requireAuth, fuelLogsRouter);
 
 app.use((err, req, res, next) => {
   console.error(err);

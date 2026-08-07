@@ -442,6 +442,7 @@ h2 { margin-top: 0; font-size: 1.2rem; }
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+  min-width: 0;
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.75rem;
   text-transform: uppercase;
@@ -453,6 +454,7 @@ h2 { margin-top: 0; font-size: 1.2rem; }
 .form-row label { flex: 1; }
 
 input, select, textarea {
+  max-width: 100%;
   padding: 0.55rem 0.6rem;
   border: 1px solid var(--border-strong);
   background: var(--input-bg);
