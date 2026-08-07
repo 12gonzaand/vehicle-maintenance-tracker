@@ -10,6 +10,7 @@ const DEFAULT_TYPES = [
   'Battery',
   'Coolant Flush',
   'Transmission Fluid',
+  'Differential Service',
   'Spark Plugs',
   'Wiper Blades',
   'Alignment',

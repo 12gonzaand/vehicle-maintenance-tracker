@@ -5,6 +5,7 @@ const ServiceRecord = require('../models/serviceRecord');
 const MileageLog = require('../models/mileageLog');
 const FuelLog = require('../models/fuelLog');
 const ServiceType = require('../models/serviceType');
+const ReminderRule = require('../models/reminderRule');
 const { uploadVehiclePhoto } = require('../middleware/upload');
 
 router.param('id', (req, res, next, id) => {
@@ -46,6 +47,7 @@ router.get('/:id', (req, res) => {
   const mileageHistory = MileageLog.combinedHistory(vehicle.id);
   const fuelLogs = FuelLog.allForVehicle(vehicle.id);
   const serviceTypes = ServiceType.all(req.user.id);
+  const reminders = ReminderRule.statusForVehicle(vehicle);
 
   res.render('vehicles/detail', {
     vehicle,
@@ -53,6 +55,7 @@ router.get('/:id', (req, res) => {
     mileageHistory,
     fuelLogs,
     serviceTypes,
+    reminders,
     query: req.query
   });
 });
