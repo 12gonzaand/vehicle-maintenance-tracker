@@ -14,6 +14,16 @@ const { UPLOADS_DIR } = require('./middleware/upload');
 const ServiceRecord = require('./models/serviceRecord');
 const ServiceFile = require('./models/serviceFile');
 
+// New uploads always get .jpg/.png/.pdf (see middleware/upload.js), but
+// vehicle photos uploaded before that normalization existed may still be on
+// disk as .jpeg — accept both so this lookup doesn't 404 pre-existing files.
+const MIME_BY_EXTENSION = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.pdf': 'application/pdf'
+};
+
 const app = express();
 
 app.set('view engine', 'ejs');
@@ -42,10 +52,19 @@ app.use(authRouter);
 // from the URL, so there's no path-traversal surface either.
 const uploadsRoot = path.join(process.cwd(), UPLOADS_DIR);
 
+// Content-Type is pinned explicitly from a trusted source (never inferred
+// from the on-disk filename by res.sendFile/send) — that's what the upload
+// side's fixed extension-by-mimetype mapping (middleware/upload.js) makes
+// possible, since the extension can no longer be attacker-chosen. nosniff
+// stops a browser from second-guessing that with its own content sniffing.
 app.get('/uploads/vehicles/:vehicleId/:filename', requireAuth, loadOwnedVehicle, (req, res) => {
   if (!req.vehicle.photo_path || path.basename(req.vehicle.photo_path) !== req.params.filename) {
     return res.status(404).end();
   }
+  const mimeType = MIME_BY_EXTENSION[path.extname(req.vehicle.photo_path).toLowerCase()];
+  if (!mimeType) return res.status(404).end();
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.type(mimeType);
   res.sendFile(path.join(uploadsRoot, req.vehicle.photo_path));
 });
 app.get('/uploads/vehicles/:vehicleId/records/:recordId/:filename', requireAuth, loadOwnedVehicle, (req, res) => {
@@ -53,6 +72,8 @@ app.get('/uploads/vehicles/:vehicleId/records/:recordId/:filename', requireAuth,
   if (!record || record.vehicle_id !== req.vehicle.id) return res.status(404).end();
   const file = ServiceFile.allForRecord(record.id).find((f) => path.basename(f.stored_path) === req.params.filename);
   if (!file) return res.status(404).end();
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.type(file.mime_type);
   res.sendFile(path.join(uploadsRoot, file.stored_path));
 });
 
