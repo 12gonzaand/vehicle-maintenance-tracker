@@ -5,8 +5,16 @@ CREATE TABLE IF NOT EXISTS settings (
   value TEXT
 );
 
+CREATE TABLE IF NOT EXISTS users (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  username      TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  created_at    TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS vehicles (
   id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id         INTEGER REFERENCES users(id) ON DELETE CASCADE,
   name            TEXT NOT NULL,
   year            INTEGER,
   make            TEXT,
@@ -20,8 +28,10 @@ CREATE TABLE IF NOT EXISTS vehicles (
 );
 
 CREATE TABLE IF NOT EXISTS service_types (
-  id   INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL UNIQUE
+  id      INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name    TEXT NOT NULL,
+  UNIQUE(user_id, name)
 );
 
 CREATE TABLE IF NOT EXISTS service_records (
@@ -87,20 +97,3 @@ CREATE TABLE IF NOT EXISTS reminder_rules (
   interval_months INTEGER,
   created_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
-
-INSERT OR IGNORE INTO service_types (name) VALUES
-  ('Oil Change'),
-  ('Tire Rotation'),
-  ('Brake Pads'),
-  ('Brake Fluid'),
-  ('Air Filter'),
-  ('Cabin Air Filter'),
-  ('Battery'),
-  ('Coolant Flush'),
-  ('Transmission Fluid'),
-  ('Spark Plugs'),
-  ('Wiper Blades'),
-  ('Alignment'),
-  ('Registration'),
-  ('Inspection'),
-  ('Tire Replacement');

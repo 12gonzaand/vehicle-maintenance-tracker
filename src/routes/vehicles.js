@@ -7,9 +7,16 @@ const FuelLog = require('../models/fuelLog');
 const ServiceType = require('../models/serviceType');
 const { uploadVehiclePhoto } = require('../middleware/upload');
 
+router.param('id', (req, res, next, id) => {
+  const vehicle = Vehicle.find(id);
+  if (!vehicle || vehicle.user_id !== req.user.id) return res.status(404).send('Vehicle not found');
+  req.vehicle = vehicle;
+  next();
+});
+
 router.get('/', (req, res) => {
   const showArchived = req.query.archived === '1';
-  const vehicles = Vehicle.all({ includeArchived: showArchived });
+  const vehicles = Vehicle.all({ userId: req.user.id, includeArchived: showArchived });
   res.render('vehicles/list', { vehicles, showArchived });
 });
 
@@ -20,6 +27,7 @@ router.get('/new', (req, res) => {
 router.post('/', (req, res) => {
   const { name, year, make, model, vin, current_mileage } = req.body;
   const vehicle = Vehicle.create({
+    user_id: req.user.id,
     name,
     year: year ? Number(year) : null,
     make,
@@ -31,14 +39,13 @@ router.post('/', (req, res) => {
 });
 
 router.get('/:id', (req, res) => {
-  const vehicle = Vehicle.find(req.params.id);
-  if (!vehicle) return res.status(404).send('Vehicle not found');
+  const vehicle = req.vehicle;
 
   const { sortBy, order, serviceType } = req.query;
   const records = ServiceRecord.allForVehicle(vehicle.id, { sortBy, order, serviceType });
   const mileageHistory = MileageLog.combinedHistory(vehicle.id);
   const fuelLogs = FuelLog.allForVehicle(vehicle.id);
-  const serviceTypes = ServiceType.all();
+  const serviceTypes = ServiceType.all(req.user.id);
 
   res.render('vehicles/detail', {
     vehicle,
@@ -51,9 +58,7 @@ router.get('/:id', (req, res) => {
 });
 
 router.get('/:id/edit', (req, res) => {
-  const vehicle = Vehicle.find(req.params.id);
-  if (!vehicle) return res.status(404).send('Vehicle not found');
-  res.render('vehicles/form', { vehicle });
+  res.render('vehicles/form', { vehicle: req.vehicle });
 });
 
 router.post('/:id', (req, res) => {

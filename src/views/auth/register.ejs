@@ -1,0 +1,28 @@
+<%- include('../partials/header', { title: 'Register' }) %>
+
+<div class="auth-page">
+  <div class="auth-card section">
+    <h1>Register</h1>
+    <p>Create your own account and vehicle list on this tracker &mdash; at least 8 characters for the password.</p>
+    <% if (error) { %>
+      <p class="auth-error"><%= error %></p>
+    <% } %>
+    <form method="post" action="/register" class="form">
+      <label>Username
+        <input type="text" name="username" required minlength="3" autofocus autocomplete="username">
+      </label>
+      <label>Password
+        <input type="password" name="password" required minlength="8" autocomplete="new-password">
+      </label>
+      <label>Confirm Password
+        <input type="password" name="confirm_password" required minlength="8" autocomplete="new-password">
+      </label>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Create Account</button>
+      </div>
+    </form>
+    <p class="auth-alt-link"><a href="/login">Already have an account? Log in</a></p>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
