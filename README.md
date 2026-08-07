@@ -29,13 +29,27 @@ MAX_FILE_SIZE_MB=15
 
 No auth secrets belong in `.env`. The session secret is generated automatically on first run and written to `.env.local` (gitignored); each account's username/password is stored (bcrypt-hashed) in the SQLite database, created via the registration screen described below.
 
+The app serves HTTPS only, using a self-signed cert in `certs/` (gitignored, not the same thing as a Tailscale-issued cert — this tailnet doesn't have HTTPS certs enabled). Generate one before first run:
+
+```bash
+mkdir -p certs
+openssl req -x509 -nodes -newkey rsa:2048 \
+  -keyout certs/key.pem -out certs/cert.pem -days 825 \
+  -subj "/CN=<your-hostname>" \
+  -addext "subjectAltName=DNS:<your-tailscale-magicdns-name>,DNS:localhost,IP:<your-tailscale-ip>,IP:127.0.0.1"
+```
+
+HTTPS is required so phone browsers (Android in particular) treat the page as a secure context — otherwise the camera/file-capture APIs used for receipt and vehicle photos are blocked entirely.
+
 ## Run
 
 ```bash
 npm start
 ```
 
-The database schema is applied automatically on startup (safe to run repeatedly — additive changes use `CREATE TABLE IF NOT EXISTS`; any one-time structural migrations, like the move to per-user accounts, are guarded so they only apply once). The app will be available at `http://<HOST>:<PORT>`, e.g. `http://<your-tailscale-ip>:3003` over your Tailscale network, or `http://localhost:3003` locally.
+The database schema is applied automatically on startup (safe to run repeatedly — additive changes use `CREATE TABLE IF NOT EXISTS`; any one-time structural migrations, like the move to per-user accounts, are guarded so they only apply once). The app will be available at `https://<HOST>:<PORT>`, e.g. `https://<your-tailscale-ip>:3003` over your Tailscale network, or `https://localhost:3003` locally.
+
+Because the cert is self-signed, the first visit from any browser (including on Android) shows a security warning — tap through it ("Advanced" → "Proceed", wording varies by browser). This only needs doing once per device/browser; the connection is still fully encrypted, it's just not signed by a CA your browser already trusts.
 
 Visit `/register` to create an account (username + password, min 8 characters) — anyone who can reach the server this way can make their own account, since the real access control is the Tailscale network itself, not the login screen. After that, every visit requires logging in with those credentials. Five incorrect attempts from an IP locks that IP out for 10 minutes.
 
