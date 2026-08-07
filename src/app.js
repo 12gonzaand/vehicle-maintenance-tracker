@@ -8,6 +8,7 @@ const vehiclesRouter = require('./routes/vehicles');
 const serviceRecordsRouter = require('./routes/serviceRecords');
 const mileageLogsRouter = require('./routes/mileageLogs');
 const fuelLogsRouter = require('./routes/fuelLogs');
+const reminderRulesRouter = require('./routes/reminderRules');
 const { ensureSessionSecret, requireAuth } = require('./lib/auth');
 const { loadOwnedVehicle } = require('./middleware/ownership');
 const { UPLOADS_DIR } = require('./middleware/upload');
@@ -83,6 +84,7 @@ app.use('/vehicles', requireAuth, vehiclesRouter);
 app.use('/vehicles/:vehicleId/records', requireAuth, loadOwnedVehicle, serviceRecordsRouter);
 app.use('/vehicles/:vehicleId/mileage-logs', requireAuth, loadOwnedVehicle, mileageLogsRouter);
 app.use('/vehicles/:vehicleId/fuel-logs', requireAuth, loadOwnedVehicle, fuelLogsRouter);
+app.use('/vehicles/:vehicleId/reminder-rules', requireAuth, loadOwnedVehicle, reminderRulesRouter);
 
 app.use((err, req, res, next) => {
   console.error(err);

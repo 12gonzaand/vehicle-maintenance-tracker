@@ -40,6 +40,69 @@
 
 <section class="section">
   <div class="section-header">
+    <h2>Reminders</h2>
+  </div>
+
+  <% if (reminders.length === 0) { %>
+    <p class="empty-state">No reminders set up yet.</p>
+  <% } else { %>
+  <div class="table-scroll">
+  <table class="records-table reminders-table">
+    <thead><tr><th>Type</th><th>Status</th><th>Detail</th><th></th></tr></thead>
+    <tbody>
+      <% reminders.forEach(r => {
+        const parts = [];
+        if (r.rule.interval_miles) {
+          parts.push('Every ' + r.rule.interval_miles.toLocaleString() + ' mi' +
+            (r.milesRemaining != null ? ' — ' + Math.abs(r.milesRemaining).toLocaleString() + ' mi ' + (r.milesRemaining >= 0 ? 'left' : 'over') : ''));
+        }
+        if (r.rule.interval_months) {
+          parts.push('Every ' + r.rule.interval_months + ' mo' +
+            (r.dueDate ? ' — due ' + r.dueDate + ' (' + Math.abs(r.daysRemaining) + 'd ' + (r.daysRemaining >= 0 ? 'left' : 'over') + ')' : ''));
+        }
+        if (!r.lastService) parts.push('no service record yet');
+        const detail = parts.join(' · ');
+      %>
+        <tr>
+          <td><%= r.rule.service_type %></td>
+          <td>
+            <span class="badge <%= r.overdue ? 'badge-overdue' : (r.dueSoon ? 'badge-due-soon' : (r.lastService ? 'badge-ok' : '')) %>">
+              <%= r.overdue ? 'Overdue' : (r.dueSoon ? 'Due soon' : (r.lastService ? 'OK' : 'No baseline')) %>
+            </span>
+          </td>
+          <td class="reminder-detail-cell"><%= detail %></td>
+          <td>
+            <form method="post" action="/vehicles/<%= vehicle.id %>/reminder-rules/<%= r.rule.id %>/delete" class="inline-form" onsubmit="return confirm('Delete this reminder?');">
+              <button type="submit" class="btn btn-danger btn-small">Delete</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  </div>
+  <% } %>
+
+  <form method="post" action="/vehicles/<%= vehicle.id %>/reminder-rules" class="form form-inline">
+    <label>Service Type
+      <select name="service_type" required>
+        <% serviceTypes.forEach(st => { %>
+          <option value="<%= st.name %>"><%= st.name %></option>
+        <% }) %>
+      </select>
+    </label>
+    <label>Every (miles)
+      <input type="number" name="interval_miles" min="1" placeholder="e.g. 5000">
+    </label>
+    <label>Every (months)
+      <input type="number" name="interval_months" min="1" placeholder="e.g. 36">
+    </label>
+    <button type="submit" class="btn">Add Reminder</button>
+  </form>
+</section>
+
+<section class="section">
+  <div class="section-header">
     <h2>Service Records</h2>
     <a class="btn btn-primary" href="/vehicles/<%= vehicle.id %>/records/new">+ Add Service Record</a>
   </div>

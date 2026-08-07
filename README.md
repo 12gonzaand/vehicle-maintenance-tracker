@@ -5,6 +5,7 @@ Self-hosted web app for tracking maintenance on personal vehicles. Node.js + Exp
 ## Features
 
 - Vehicles with photos, service records (with receipt/invoice file attachments), mileage history, and per-tank fuel log tracking (grade, cost, gallons, mileage — auto-computes MPG per fill-up plus a running average, charted).
+- Maintenance reminders: per-vehicle rules ("every 5,000 mi" and/or "every 6 months" for a given service type), tracked against the most recent matching service record and shown as OK / Due soon / Overdue.
 - Multi-user: anyone who can reach the server can register their own account at `/register`; each account's vehicles, records, and files are fully isolated from every other account's.
 - Session-based login with per-IP rate limiting (5 failed attempts locks that IP out for 10 minutes).
 
@@ -29,17 +30,21 @@ MAX_FILE_SIZE_MB=15
 
 No auth secrets belong in `.env`. The session secret is generated automatically on first run and written to `.env.local` (gitignored); each account's username/password is stored (bcrypt-hashed) in the SQLite database, created via the registration screen described below.
 
-The app serves HTTPS only, using a self-signed cert in `certs/` (gitignored, not the same thing as a Tailscale-issued cert — this tailnet doesn't have HTTPS certs enabled). Generate one before first run:
+The app serves HTTPS only, using a cert in `certs/` (gitignored). This must be a real Tailscale-issued cert, not a self-signed one, or browsers show a permanent security warning. Set it up once:
+
+1. In the [Tailscale admin console](https://login.tailscale.com/admin/dns), enable **MagicDNS**, then enable **HTTPS Certificates** (requires MagicDNS).
+2. Issue the cert for this node's MagicDNS name (find it with `tailscale status`, e.g. `my-server.abc123de.ts.net`):
 
 ```bash
 mkdir -p certs
-openssl req -x509 -nodes -newkey rsa:2048 \
-  -keyout certs/key.pem -out certs/cert.pem -days 825 \
-  -subj "/CN=<your-hostname>" \
-  -addext "subjectAltName=DNS:<your-tailscale-magicdns-name>,DNS:localhost,IP:<your-tailscale-ip>,IP:127.0.0.1"
+tailscale cert --cert-file certs/cert.pem --key-file certs/key.pem <your-tailscale-magicdns-name>
 ```
 
+The app must be accessed via that MagicDNS hostname, not the raw Tailscale IP — the cert is issued per-hostname and won't validate against an IP.
+
 HTTPS is required so phone browsers (Android in particular) treat the page as a secure context — otherwise the camera/file-capture APIs used for receipt and vehicle photos are blocked entirely.
+
+Tailscale certs expire periodically and need renewal — see [Cert renewal](#cert-renewal) below for the automated setup.
 
 ## Run
 
@@ -47,9 +52,7 @@ HTTPS is required so phone browsers (Android in particular) treat the page as a 
 npm start
 ```
 
-The database schema is applied automatically on startup (safe to run repeatedly — additive changes use `CREATE TABLE IF NOT EXISTS`; any one-time structural migrations, like the move to per-user accounts, are guarded so they only apply once). The app will be available at `https://<HOST>:<PORT>`, e.g. `https://<your-tailscale-ip>:3003` over your Tailscale network, or `https://localhost:3003` locally.
-
-Because the cert is self-signed, the first visit from any browser (including on Android) shows a security warning — tap through it ("Advanced" → "Proceed", wording varies by browser). This only needs doing once per device/browser; the connection is still fully encrypted, it's just not signed by a CA your browser already trusts.
+The database schema is applied automatically on startup (safe to run repeatedly — additive changes use `CREATE TABLE IF NOT EXISTS`; any one-time structural migrations, like the move to per-user accounts, are guarded so they only apply once). The app will be available at `https://<your-tailscale-magicdns-name>:<PORT>` over your Tailscale network (see the cert setup above for why it must be the MagicDNS name and not the IP), or `https://localhost:3003` locally.
 
 Visit `/register` to create an account (username + password, min 8 characters) — anyone who can reach the server this way can make their own account, since the real access control is the Tailscale network itself, not the login screen. After that, every visit requires logging in with those credentials. Five incorrect attempts from an IP locks that IP out for 10 minutes.
 
@@ -111,6 +114,41 @@ journalctl --user -u maintenance-tracker -f
 
 A `git push` alone does **not** update the running app — restart the service afterward to pick up new code.
 
+### Cert renewal
+
+Tailscale-issued certs expire periodically. `scripts/renew-cert.sh` re-issues the cert (a no-op unless it's within 30 days of expiring) and restarts `maintenance-tracker.service` only if the key actually changed. Automate it with a second `systemd --user` timer, `~/.config/systemd/user/maintenance-tracker-cert-renew.service`:
+
+```ini
+[Unit]
+Description=Renew Tailscale TLS cert for maintenance-tracker
+
+[Service]
+Type=oneshot
+ExecStart=/home/youruser/maintenance-tracker/scripts/renew-cert.sh
+```
+
+and `~/.config/systemd/user/maintenance-tracker-cert-renew.timer`:
+
+```ini
+[Unit]
+Description=Weekly renewal check for maintenance-tracker Tailscale TLS cert
+
+[Timer]
+OnCalendar=weekly
+Persistent=true
+RandomizedDelaySec=1h
+
+[Install]
+WantedBy=timers.target
+```
+
+```bash
+systemctl --user daemon-reload
+systemctl --user enable --now maintenance-tracker-cert-renew.timer
+```
+
+Requires lingering (`loginctl enable-linger <youruser>`, see above) so the timer fires even when logged out. Check on it with `systemctl --user list-timers` or `journalctl --user -u maintenance-tracker-cert-renew -f`.
+
 ## Backing up
 
 Everything that matters lives in two places:
@@ -136,8 +174,8 @@ src/
     schema.sql          Table definitions
     migrate.js           Applies schema.sql on startup, plus one-time guarded migrations (e.g. the multi-user upgrade)
     index.js              better-sqlite3 connection
-  models/               Data access per table (user, vehicle, serviceRecord, serviceFile, mileageLog, fuelLog, serviceType)
-  routes/               Express routers (auth, vehicles, serviceRecords, mileageLogs, fuelLogs)
+  models/               Data access per table (user, vehicle, serviceRecord, serviceFile, mileageLog, fuelLog, serviceType, reminderRule)
+  routes/               Express routers (auth, vehicles, serviceRecords, mileageLogs, fuelLogs, reminderRules)
   lib/
     auth.js               Password hashing/verification, session secret, login lockout, requireAuth middleware
   middleware/
@@ -145,8 +183,12 @@ src/
     ownership.js          Loads a vehicle from :vehicleId and 404s unless it belongs to the logged-in user
   views/                EJS templates (server-rendered)
   public/               Static CSS/JS (table sort/filter is server-side via query params; mileage and fuel-efficiency charts are small canvas scripts)
+scripts/
+  reset-password.js      Resets an existing account's password
+  renew-cert.sh           Re-issues the Tailscale TLS cert and restarts the service if it changed (see Cert renewal)
 uploads/                Uploaded files, gitignored
 data/                  SQLite database file, gitignored
+certs/                 TLS cert/key, gitignored
 ```
 
 ## Notes
@@ -155,4 +197,4 @@ data/                  SQLite database file, gitignored
 - File uploads accept JPG, PNG, and PDF only, capped at `MAX_FILE_SIZE_MB` (default 15MB).
 - Vehicle `current_mileage` is automatically bumped whenever a new service record, mileage log, or fuel log entry has a higher mileage than what's on file.
 - Fuel log MPG is computed per fill-up (assumes each entry is a full-tank fill) as the mileage delta since the previous fill divided by gallons, plus a running average across all fill-ups — both charted on the vehicle page.
-- Maintenance reminders (mileage/time-interval based) are not implemented; the `reminder_rules` table exists in the schema for future use.
+- Maintenance reminders are rules of the form "every N miles" and/or "every N months" for a service type, evaluated against that vehicle's `current_mileage` and the most recent service record of the same type. A rule with no matching service record yet shows "No baseline" rather than a false due date. There's no notification/email — reminders only surface as a status badge (OK / Due soon / Overdue) on the vehicle page.
