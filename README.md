@@ -64,6 +64,28 @@ npm run reset-password
 
 This prompts for a username, confirms the account exists, then prompts for and sets a new password. Restart the service afterward to log out any existing sessions.
 
+### Inviting people who aren't on your tailnet
+
+Access here has two layers: Tailscale decides who can *reach* the server at all, the app's login decides *whose data is whose* once they're in. Multi-user accounts (above) only help with the second layer — someone still needs Tailscale connectivity to this machine before `/register` means anything to them. To add someone who isn't already a member of your tailnet:
+
+1. In the [Tailscale admin console](https://login.tailscale.com/admin/machines), find this machine → **⋯** → **Share...** → send an invite to their email. This is a single-device share, not a full tailnet invite — it doesn't give them access to your other devices.
+2. They install Tailscale (Android/iOS/desktop), accept the invite, and connect.
+3. They open `https://<your-tailscale-magicdns-name>:<PORT>` and register their own account at `/register`.
+
+**Security note:** plain device sharing gives the recipient network reachability to *every* port listening on that machine's Tailscale IP, not just this app's port — if the box also runs SSH, other web apps, a media server, etc., a shared recipient can reach those too (they'd still need real credentials to do anything with them, but they can hit the front door). Fine for one or two trusted people and a box that only runs this app; worth a second look if the box runs anything sensitive. Tailscale can scope a shared recipient down to a single port via an ACL grant keyed to their email and the server's Tailscale IP — tags are stripped for external shared users, so the rule has to target the IP directly, not a tag:
+
+```json
+"grants": [
+  {
+    "src": ["friend@example.com"],
+    "dst": ["100.x.x.x"],
+    "ip": ["<port>"]
+  }
+]
+```
+
+Replace `100.x.x.x` with this machine's Tailscale IP (`tailscale ip -4`) and `<port>` with the app's port. See [Tailscale's grants syntax docs](https://tailscale.com/docs/reference/syntax/grants) for the full policy file format.
+
 For local development with auto-restart on file changes:
 
 ```bash
