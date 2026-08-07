@@ -5,11 +5,28 @@ const multer = require('multer');
 const UPLOADS_DIR = process.env.UPLOADS_DIR || './uploads';
 const MAX_FILE_SIZE_MB = Number(process.env.MAX_FILE_SIZE_MB || 15);
 
-const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'application/pdf']);
+// The extension a stored file gets is derived from this map, never from the
+// client-supplied original filename — a request can claim any Content-Type
+// alongside any filename it wants, so trusting the filename's extension
+// would let an "image/jpeg" upload land on disk as e.g. "x.html" and get
+// served back as text/html later. Keying storage off the (fileFilter-
+// validated) mimetype instead means the on-disk extension always matches
+// what was actually allowed through.
+const EXTENSION_BY_MIME = {
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
+  'application/pdf': '.pdf'
+};
 
-function safeFilename(originalname) {
+const ALLOWED_MIME_TYPES = new Set(Object.keys(EXTENSION_BY_MIME));
+
+// Called from a storage `filename` callback, which multer only invokes after
+// fileFilter has already accepted the file — so `mimetype` is guaranteed to
+// be a key in EXTENSION_BY_MIME here.
+function safeFilename(originalname, mimetype) {
   const rand = Math.round(Math.random() * 1e9);
-  return `${Date.now()}-${rand}-${originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+  const base = path.basename(originalname, path.extname(originalname)).replace(/[^a-zA-Z0-9._-]/g, '_');
+  return `${Date.now()}-${rand}-${base}${EXTENSION_BY_MIME[mimetype] || ''}`;
 }
 
 const storage = multer.diskStorage({
@@ -20,7 +37,7 @@ const storage = multer.diskStorage({
     fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },
-  filename: (req, file, cb) => cb(null, safeFilename(file.originalname))
+  filename: (req, file, cb) => cb(null, safeFilename(file.originalname, file.mimetype))
 });
 
 function fileFilter(req, file, cb) {
@@ -46,7 +63,7 @@ const stagedStorage = multer.diskStorage({
     fs.mkdirSync(stagingDir, { recursive: true });
     cb(null, stagingDir);
   },
-  filename: (req, file, cb) => cb(null, safeFilename(file.originalname))
+  filename: (req, file, cb) => cb(null, safeFilename(file.originalname, file.mimetype))
 });
 
 const uploadStaged = multer({
@@ -62,10 +79,7 @@ const vehiclePhotoStorage = multer.diskStorage({
     fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, `photo${ext}`);
-  }
+  filename: (req, file, cb) => cb(null, `photo${EXTENSION_BY_MIME[file.mimetype] || ''}`)
 });
 
 const IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png']);
@@ -81,4 +95,4 @@ const uploadVehiclePhoto = multer({
   limits: { fileSize: MAX_FILE_SIZE_MB * 1024 * 1024 }
 });
 
-module.exports = { upload, uploadStaged, uploadVehiclePhoto, UPLOADS_DIR };
+module.exports = { upload, uploadStaged, uploadVehiclePhoto, UPLOADS_DIR, EXTENSION_BY_MIME };
