@@ -7,19 +7,20 @@
   <% if (error) { %>
     <p class="form-error"><%= error %></p>
   <% } %>
-  <fieldset class="service-type-checks">
-    <legend>Service Type(s) — check all that were performed on this bill</legend>
-    <% serviceTypes.forEach(st => { %>
-      <label class="service-type-check">
-        <input type="checkbox" name="service_types" value="<%= st.name %>"
-          <%= record && record.serviceTypes && record.serviceTypes.includes(st.name) ? 'checked' : '' %>>
-        <%= st.name %>
-      </label>
-    <% }) %>
-  </fieldset>
+  <% const knownNames = serviceTypes.map(st => st.name);
+     const selectedKnown = record && record.serviceTypes ? record.serviceTypes.filter(n => knownNames.includes(n)) : [];
+     const otherNames = record && record.serviceTypes ? record.serviceTypes.filter(n => !knownNames.includes(n)) : []; %>
+  <div class="service-type-picker" data-service-type-picker data-selected='<%= JSON.stringify(selectedKnown) %>'>
+    <label for="service-type-select">Service Type(s) — pick all that were performed on this bill</label>
+    <select id="service-type-select" class="service-type-select">
+      <option value="">+ Add a service type…</option>
+      <% serviceTypes.forEach(st => { %>
+        <option value="<%= st.name %>"><%= st.name %></option>
+      <% }) %>
+    </select>
+    <div class="service-type-chips"></div>
+  </div>
   <label>Other (not listed above — comma-separated if more than one)
-    <% const knownNames = serviceTypes.map(st => st.name);
-       const otherNames = record && record.serviceTypes ? record.serviceTypes.filter(n => !knownNames.includes(n)) : []; %>
     <input type="text" name="other_types" value="<%= otherNames.join(', ') %>">
   </label>
   <div class="form-row">
@@ -54,6 +55,7 @@
   </div>
 </form>
 
+<script src="/public/js/service-type-picker.js"></script>
 <% if (!record) { %>
 <script src="/public/js/receipt-scan.js"></script>
 <% } %>
