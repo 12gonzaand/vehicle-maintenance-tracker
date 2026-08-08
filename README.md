@@ -4,8 +4,8 @@ Self-hosted web app for tracking maintenance on personal vehicles. Node.js + Exp
 
 ## Features
 
-- Vehicles with photos, service records (with receipt/invoice file attachments), mileage history, and per-tank fuel log tracking (grade, cost, gallons, mileage — auto-computes MPG per fill-up plus a running average, charted).
-- Optional: scan a receipt photo to auto-fill the fuel log or service record form (see [Receipt scanning](#receipt-scanning-optional)) — Gemini's free tier reads the fields off the photo, you review/correct before saving.
+- Vehicles with photos, service records (with receipt/invoice file attachments, and support for multiple service types on one record — e.g. an oil change and a tire rotation on the same bill, instead of needing a separate record per service), mileage history, and per-tank fuel log tracking (grade, cost, gallons, mileage — auto-computes MPG per fill-up plus a running average, charted).
+- Optional: scan one or more receipt photos to auto-fill the fuel log or service record form (see [Receipt scanning](#receipt-scanning-optional)) — Gemini's free tier reads the fields off the photo(s), you review/correct before saving.
 - Maintenance reminders: per-vehicle rules ("every 5,000 mi" and/or "every 6 months" for a given service type), tracked against the most recent matching service record and shown as OK / Due soon / Overdue.
 - Multi-user: anyone who can reach the server can register their own account at `/register`; each account's vehicles, records, and files are fully isolated from every other account's.
 - Session-based login with per-IP rate limiting (5 failed attempts locks that IP out for 10 minutes).
@@ -50,9 +50,10 @@ Tailscale certs expire periodically and need renewal — see [Cert renewal](#cer
 ## Receipt scanning (optional)
 
 "Scan receipt to autofill" on the fuel log and Add Service Record forms
-sends the receipt photo to Google's Gemini API (free tier) and uses the
-extracted fields to pre-fill the form — you still review and correct
-before saving, it never submits anything on its own.
+sends the receipt photo (or photos — see multi-page below) to Google's
+Gemini API (free tier) and uses the extracted fields to pre-fill the
+form — you still review and correct before saving, it never submits
+anything on its own.
 
 1. Get a free API key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) (no GCP billing account needed).
 2. Add it to `.env`:
@@ -65,20 +66,35 @@ GEMINI_API_KEY=your-key-here
    shows a "not configured" message — every form still works exactly as
    it did before this feature existed, nothing is required.
 
-`GEMINI_MODEL` is an optional override in `.env` if the app's default
-flash-tier model name has been superseded by the time you're reading
-this — check the same aistudio.google.com page for Google's current
-recommendation.
+**Model used:** defaults to `gemini-flash-latest`, a Google-maintained
+alias that always points at their current recommended flash-tier model,
+rather than a pinned version — pinned versions can get deprecated for new
+API keys over time (hit this directly during development: `gemini-2.5-flash`
+404'd with "no longer available to new users" despite still being listed
+by Gemini's own models API). `GEMINI_MODEL` in `.env` overrides this if
+you'd rather pin a specific version anyway.
 
-For service records, the receipt photo is both scanned **and** saved as a
-permanent attachment (same as it always was) — scanning doesn't change
-that. Fuel log receipts are **scan-only**: the photo is sent to Gemini
-purely to read the numbers off it, then discarded — nothing new is stored
-for fuel logs, since they had no attachment storage before this feature
-either.
+**Multi-page receipts:** both scan buttons accept more than one photo at
+once (up to 6) — useful for an invoice photographed as separate pages
+(e.g. an itemized page plus a totals page). All selected images are sent
+together and read as one receipt, not scanned separately.
 
-**Privacy note:** the receipt photo itself is sent to Google's Gemini API
-for this to work — worth knowing since receipts occasionally show partial
+**Multiple service types per bill:** the Add Service Record form shows a
+checkbox for every known service type, plus a free-text "Other" field for
+anything not listed — check as many as the bill actually covers (e.g. oil
+change + tire rotation + air filter on one visit). Scanning a receipt
+automatically checks every service type Gemini identifies across all the
+photos you selected, dropping anything not already in your list into
+"Other" instead of guessing a checkbox for it.
+
+For service records, the receipt photo(s) are both scanned **and** saved
+as a permanent attachment (same as it always was) — scanning doesn't
+change that. Fuel log receipts are **scan-only**: sent to Gemini purely to
+read the numbers off, then discarded — nothing new is stored for fuel
+logs, since they had no attachment storage before this feature either.
+
+**Privacy note:** the receipt photo(s) are sent to Google's Gemini API for
+this to work — worth knowing since receipts occasionally show partial
 card numbers or other personal details. Free-tier usage limits are
 Google's to enforce; this app adds no additional rate-limiting beyond the
 existing login/network access controls.
@@ -329,14 +345,15 @@ src/
     migrate.js           Applies schema.sql on startup, plus one-time guarded migrations (e.g. the multi-user upgrade)
     index.js              better-sqlite3 connection
   models/               Data access per table (user, vehicle, serviceRecord, serviceFile, mileageLog, fuelLog, serviceType, reminderRule)
-  routes/               Express routers (auth, vehicles, serviceRecords, mileageLogs, fuelLogs, reminderRules)
+  routes/               Express routers (auth, vehicles, serviceRecords, mileageLogs, fuelLogs, reminderRules, receiptScan)
   lib/
     auth.js               Password hashing/verification, session secret, login lockout, requireAuth middleware
+    receiptScan.js         Calls Gemini's API to extract fields from receipt photo(s) (see Receipt scanning above)
   middleware/
-    upload.js            multer config — file type/size validation, per-vehicle/per-record storage paths
+    upload.js            multer config — file type/size validation, per-vehicle/per-record storage paths, plus an in-memory uploader for receipt scanning (never written to disk)
     ownership.js          Loads a vehicle from :vehicleId and 404s unless it belongs to the logged-in user
   views/                EJS templates (server-rendered)
-  public/               Static CSS/JS (table sort/filter is server-side via query params; mileage and fuel-efficiency charts are small canvas scripts)
+  public/               Static CSS/JS (table sort/filter is server-side via query params; mileage/fuel-efficiency charts and receipt-scan are small vanilla-JS scripts, no framework/bundler)
 scripts/
   reset-password.js      Resets an existing account's password
   renew-cert.sh           Re-issues the Tailscale TLS cert and restarts the service if it changed (see Cert renewal)
@@ -351,4 +368,4 @@ certs/                 TLS cert/key, gitignored
 - File uploads accept JPG, PNG, and PDF only, capped at `MAX_FILE_SIZE_MB` (default 15MB).
 - Vehicle `current_mileage` is automatically bumped whenever a new service record, mileage log, or fuel log entry has a higher mileage than what's on file.
 - Fuel log MPG is computed per fill-up (assumes each entry is a full-tank fill) as the mileage delta since the previous fill divided by gallons, plus a running average across all fill-ups — both charted on the vehicle page.
-- Maintenance reminders are rules of the form "every N miles" and/or "every N months" for a service type, evaluated against that vehicle's `current_mileage` and the most recent service record of the same type. A rule with no matching service record yet shows "No baseline" rather than a false due date. There's no notification/email — reminders only surface as a status badge (OK / Due soon / Overdue) on the vehicle page.
+- Maintenance reminders are rules of the form "every N miles" and/or "every N months" for a service type, evaluated against that vehicle's `current_mileage` and the most recent service record that includes that type — a record can cover more than one type (see Features above), so a reminder matches any record it was part of, not only a record whose sole type was that one. A rule with no matching service record yet shows "No baseline" rather than a false due date. There's no notification/email — reminders only surface as a status badge (OK / Due soon / Overdue) on the vehicle page.
