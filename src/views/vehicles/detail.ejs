@@ -1,24 +1,26 @@
 <%- include('../partials/header', { title: vehicle.name }) %>
 
 <div class="vehicle-hero<%= vehicle.photo_path ? ' has-photo' : '' %>">
-  <% if (vehicle.photo_path) { %>
-    <img class="vehicle-hero-photo" src="/uploads/<%= vehicle.photo_path %>" alt="<%= vehicle.name %>">
-    <div class="vehicle-hero-scrim"></div>
-  <% } else { %>
-    <div class="vehicle-hero-noimg"><%- include('../partials/car-icon') %></div>
-  <% } %>
+  <div class="vehicle-hero-media">
+    <% if (vehicle.photo_path) { %>
+      <img class="vehicle-hero-photo" src="/uploads/<%= vehicle.photo_path %>" alt="<%= vehicle.name %>">
+      <div class="vehicle-hero-scrim"></div>
+    <% } else { %>
+      <div class="vehicle-hero-noimg"><%- include('../partials/car-icon') %></div>
+    <% } %>
 
-  <% if (vehicle.vin) { %>
-    <div class="vin-plate">
-      <span class="vin-label">VIN</span>
-      <span class="vin-value"><%= vehicle.vin %></span>
+    <% if (vehicle.vin) { %>
+      <div class="vin-plate">
+        <span class="vin-label">VIN</span>
+        <span class="vin-value"><%= vehicle.vin %></span>
+      </div>
+    <% } %>
+
+    <div class="vehicle-hero-body">
+      <h1><%= vehicle.name %><% if (vehicle.archived) { %> <span class="badge">archived</span><% } %></h1>
+      <p class="subtitle"><%= [vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(' ') || 'No details recorded' %></p>
+      <%- include('../partials/odometer', { mileage: vehicle.current_mileage }) %>
     </div>
-  <% } %>
-
-  <div class="vehicle-hero-body">
-    <h1><%= vehicle.name %><% if (vehicle.archived) { %> <span class="badge">archived</span><% } %></h1>
-    <p class="subtitle"><%= [vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(' ') || 'No details recorded' %></p>
-    <%- include('../partials/odometer', { mileage: vehicle.current_mileage }) %>
   </div>
 
   <div class="vehicle-hero-actions">
