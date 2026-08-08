@@ -16,7 +16,8 @@
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
 
-  const padding = 30;
+  const topPadding = 20;
+  const bottomPadding = 20;
   const dates = points.map(p => new Date(p.date).getTime());
   const miles = points.map(p => p.mileage);
   const minDate = Math.min(...dates);
@@ -24,8 +25,15 @@
   const minMiles = Math.min(...miles);
   const maxMiles = Math.max(...miles);
 
-  const xScale = (t) => padding + ((t - minDate) / ((maxDate - minDate) || 1)) * (width - padding * 2);
-  const yScale = (m) => height - padding - ((m - minMiles) / ((maxMiles - minMiles) || 1)) * (height - padding * 2);
+  const minLabel = minMiles.toLocaleString() + ' mi';
+  const maxLabel = maxMiles.toLocaleString() + ' mi';
+
+  ctx.font = '11px "IBM Plex Mono", monospace';
+  const leftPadding = Math.max(ctx.measureText(minLabel).width, ctx.measureText(maxLabel).width) + 14;
+  const rightPadding = 10;
+
+  const xScale = (t) => leftPadding + ((t - minDate) / ((maxDate - minDate) || 1)) * (width - leftPadding - rightPadding);
+  const yScale = (m) => height - bottomPadding - ((m - minMiles) / ((maxMiles - minMiles) || 1)) * (height - topPadding - bottomPadding);
 
   const styles = getComputedStyle(document.documentElement);
   const lineColor = styles.getPropertyValue('--orange').trim() || '#ff6a1a';
@@ -53,6 +61,6 @@
 
   ctx.fillStyle = textColor;
   ctx.font = '11px "IBM Plex Mono", monospace';
-  ctx.fillText(minMiles.toLocaleString() + ' mi', 2, height - padding);
-  ctx.fillText(maxMiles.toLocaleString() + ' mi', 2, padding);
+  ctx.fillText(minLabel, 2, height - bottomPadding + 4);
+  ctx.fillText(maxLabel, 2, topPadding - 4);
 })();
