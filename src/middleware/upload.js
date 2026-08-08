@@ -95,4 +95,20 @@ const uploadVehiclePhoto = multer({
   limits: { fileSize: MAX_FILE_SIZE_MB * 1024 * 1024 }
 });
 
-module.exports = { upload, uploadStaged, uploadVehiclePhoto, UPLOADS_DIR, EXTENSION_BY_MIME };
+// Used only for the receipt-scan endpoint (src/routes/receiptScan.js) — the
+// image is sent to Gemini and never written to disk, so this uses in-memory
+// storage rather than the diskStorage instances above.
+const uploadReceiptScan = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: (req, file, cb) => {
+    if (!IMAGE_MIME_TYPES.has(file.mimetype)) {
+      return cb(new Error('Only JPG and PNG images are allowed'));
+    }
+    cb(null, true);
+  },
+  limits: { fileSize: MAX_FILE_SIZE_MB * 1024 * 1024 }
+});
+
+module.exports = {
+  upload, uploadStaged, uploadVehiclePhoto, uploadReceiptScan, UPLOADS_DIR, EXTENSION_BY_MIME
+};
