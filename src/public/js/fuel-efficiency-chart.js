@@ -17,7 +17,8 @@
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
 
-  const padding = 30;
+  const topPadding = 20;
+  const bottomPadding = 20;
 
   let sum = 0;
   const avgs = points.map((p, i) => {
@@ -30,10 +31,17 @@
   const maxVal = Math.max(...allValues);
   const valRange = (maxVal - minVal) || 1;
 
-  const slot = (width - padding * 2) / points.length;
-  const xAt = (i) => padding + slot * (i + 0.5);
-  const baseY = height - padding;
-  const yScale = (v) => baseY - ((v - minVal) / valRange) * (height - padding * 2);
+  const minLabel = minVal.toFixed(1) + ' mpg';
+  const maxLabel = maxVal.toFixed(1) + ' mpg';
+
+  ctx.font = '11px "IBM Plex Mono", monospace';
+  const leftPadding = Math.max(ctx.measureText(minLabel).width, ctx.measureText(maxLabel).width) + 14;
+  const rightPadding = 10;
+
+  const slot = (width - leftPadding - rightPadding) / points.length;
+  const xAt = (i) => leftPadding + slot * (i + 0.5);
+  const baseY = height - bottomPadding;
+  const yScale = (v) => baseY - ((v - minVal) / valRange) * (height - topPadding - bottomPadding);
 
   const styles = getComputedStyle(document.documentElement);
   const barColor = styles.getPropertyValue('--orange').trim() || '#ff6a1a';
@@ -70,8 +78,8 @@
 
   ctx.font = '11px "IBM Plex Mono", monospace';
   ctx.fillStyle = textColor;
-  ctx.fillText(minVal.toFixed(1) + ' mpg', 2, baseY);
-  ctx.fillText(maxVal.toFixed(1) + ' mpg', 2, padding + 10);
+  ctx.fillText(minLabel, 2, baseY + 4);
+  ctx.fillText(maxLabel, 2, topPadding - 4);
 
   ctx.fillStyle = barColor;
   ctx.fillRect(width - 150, 6, 10, 10);
