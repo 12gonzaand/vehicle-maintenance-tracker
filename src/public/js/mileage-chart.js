@@ -28,8 +28,9 @@
   const minLabel = minMiles.toLocaleString() + ' mi';
   const maxLabel = maxMiles.toLocaleString() + ' mi';
 
-  ctx.font = '11px "IBM Plex Mono", monospace';
-  const leftPadding = Math.max(ctx.measureText(minLabel).width, ctx.measureText(maxLabel).width) + 14;
+  const FONT = '11px "IBM Plex Mono", monospace';
+  const maxLabelWidth = ChartUtils.measureMaxLabelWidth(ctx, FONT, [minLabel, maxLabel]);
+  const leftPadding = Math.min(maxLabelWidth + 14, width * 0.4);
   const rightPadding = 10;
 
   const xScale = (t) => leftPadding + ((t - minDate) / ((maxDate - minDate) || 1)) * (width - leftPadding - rightPadding);
@@ -60,7 +61,6 @@
   });
 
   ctx.fillStyle = textColor;
-  ctx.font = '11px "IBM Plex Mono", monospace';
   ctx.fillText(minLabel, 2, height - bottomPadding + 4);
   ctx.fillText(maxLabel, 2, topPadding - 4);
 })();
