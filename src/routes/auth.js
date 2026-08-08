@@ -1,7 +1,7 @@
 const express = require('express');
 const {
   hashPassword, verifyCredentials, isSafeReturnTo,
-  checkLockout, recordFailedLogin, clearLoginAttempts
+  checkLockout, recordFailedLogin, clearLoginAttempts, clientIp
 } = require('../lib/auth');
 const User = require('../models/user');
 const ServiceType = require('../models/serviceType');
@@ -50,7 +50,8 @@ router.get('/login', (req, res) => {
 });
 
 router.post('/login', (req, res) => {
-  const lockout = checkLockout(req.ip);
+  const ip = clientIp(req);
+  const lockout = checkLockout(ip);
   if (lockout.locked) {
     return res.render('auth/login', { title: 'Log In', error: lockoutMessage(lockout.remainingMs) });
   }
@@ -58,13 +59,13 @@ router.post('/login', (req, res) => {
   const { username, password } = req.body;
   const user = verifyCredentials(username, password);
   if (!user) {
-    recordFailedLogin(req.ip);
-    const after = checkLockout(req.ip);
+    recordFailedLogin(ip);
+    const after = checkLockout(ip);
     const error = after.locked ? lockoutMessage(after.remainingMs) : 'Incorrect username or password.';
     return res.render('auth/login', { title: 'Log In', error });
   }
 
-  clearLoginAttempts(req.ip);
+  clearLoginAttempts(ip);
   const returnTo = isSafeReturnTo(req.session && req.session.returnTo) ? req.session.returnTo : '/vehicles';
   req.session.regenerate((err) => {
     if (err) return res.render('auth/login', { title: 'Log In', error: 'Something went wrong. Try again.' });
