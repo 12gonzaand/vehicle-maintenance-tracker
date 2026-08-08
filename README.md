@@ -1,6 +1,6 @@
 # Maintenance Tracker
 
-Self-hosted web app for tracking maintenance on personal vehicles. Node.js + Express + SQLite, gated by per-user accounts (intended for access over Tailscale only). Multiple people can share one server, each with their own login and their own private set of vehicles.
+Self-hosted web app for tracking maintenance on personal vehicles. Node.js + Express + SQLite, gated by per-user accounts. Multiple people can share one server, each with their own login and their own private set of vehicles. Designed for access over Tailscale; optionally also reachable over the public internet via a Cloudflare Tunnel (see [Public access via Cloudflare Tunnel](#public-access-via-cloudflare-tunnel-optional)) for sharing with people who don't want to install Tailscale.
 
 ## Features
 
@@ -30,7 +30,7 @@ MAX_FILE_SIZE_MB=15
 
 No auth secrets belong in `.env`. The session secret is generated automatically on first run and written to `.env.local` (gitignored); each account's username/password is stored (bcrypt-hashed) in the SQLite database, created via the registration screen described below.
 
-The app serves HTTPS only, using a cert in `certs/` (gitignored). This must be a real Tailscale-issued cert, not a self-signed one, or browsers show a permanent security warning. Set it up once:
+The app serves HTTPS on your Tailscale interface, using a cert in `certs/` (gitignored). This must be a real Tailscale-issued cert, not a self-signed one, or browsers show a permanent security warning. (It also listens on plain HTTP on `127.0.0.1` only, for the optional Cloudflare Tunnel path below — that listener is unreachable from outside the box.) Set up the Tailscale cert once:
 
 1. In the [Tailscale admin console](https://login.tailscale.com/admin/dns), enable **MagicDNS**, then enable **HTTPS Certificates** (requires MagicDNS).
 2. Issue the cert for this node's MagicDNS name (find it with `tailscale status`, e.g. `my-server.abc123de.ts.net`):
@@ -85,6 +85,81 @@ Access here has two layers: Tailscale decides who can *reach* the server at all,
 ```
 
 Replace `100.x.x.x` with this machine's Tailscale IP (`tailscale ip -4`) and `<port>` with the app's port. See [Tailscale's grants syntax docs](https://tailscale.com/docs/reference/syntax/grants) for the full policy file format.
+
+## Public access via Cloudflare Tunnel (optional)
+
+Sharing over Tailscale (above) is free but requires everyone to install
+Tailscale. If you'd rather share with people who won't do that, Cloudflare
+Tunnel exposes the app at a normal public HTTPS URL, without opening any
+ports on your router. This is entirely additive — the Tailscale HTTPS setup
+above keeps working unchanged; this just adds a second way in.
+
+**You need your own domain in your own Cloudflare account for this** —
+domains can't be shared across separate deployments, so anyone self-hosting
+their own instance of this app needs to bring their own (buy a cheap one,
+~$2–12/yr depending on TLD, through Cloudflare Registrar or anywhere else
+with its nameservers pointed at Cloudflare — both free to add).
+
+The app itself listens on plain HTTP on `127.0.0.1` for this path (see
+`src/server.js`) — Cloudflare terminates TLS at its edge, so the app never
+handles a cert for public traffic; `cloudflared` is the only thing that can
+reach that loopback listener.
+
+1. Add your domain to Cloudflare as a zone if it isn't already.
+2. In [Zero Trust → Access → Applications](https://one.dash.cloudflare.com/),
+   create a "Self-hosted" application for the hostname you want (e.g.
+   `maintenance.yourdomain.com`), with a policy allowlisting specific
+   emails. This is the layer that decides who can reach the app publicly at
+   all — the equivalent of Tailscale network membership for this path. The
+   app's own login (below) still decides *whose data is whose* once someone
+   is through; `/register` stays open the same way it does on the Tailscale
+   path, because Access is already gating who gets there.
+3. Install `cloudflared` on the server (Cloudflare's apt repo or a direct
+   binary download — a one-time root-level package install).
+4. `cloudflared tunnel login` — opens a browser for a one-time OAuth flow
+   authorizing this box against your Cloudflare account.
+5. `cloudflared tunnel create maintenance-tracker` — creates the tunnel and
+   a credentials file under `~/.cloudflared/`.
+6. Create `~/.cloudflared/config.yml`:
+
+   ```yaml
+   tunnel: maintenance-tracker
+   credentials-file: /home/youruser/.cloudflared/<tunnel-id>.json
+
+   ingress:
+     - hostname: maintenance.yourdomain.com
+       service: http://127.0.0.1:3003
+     - service: http_status:404
+   ```
+
+7. `cloudflared tunnel route dns maintenance-tracker maintenance.yourdomain.com`
+   — creates the DNS record automatically.
+8. Run it as a `systemd --user` service, the same pattern as
+   `maintenance-tracker.service` (not `cloudflared service install`, which
+   installs as a root-level system service instead):
+
+   ```ini
+   [Unit]
+   Description=Cloudflare Tunnel for maintenance-tracker
+   After=network.target
+
+   [Service]
+   ExecStart=/usr/bin/cloudflared tunnel run maintenance-tracker
+   Restart=on-failure
+
+   [Install]
+   WantedBy=default.target
+   ```
+
+   ```bash
+   systemctl --user daemon-reload
+   systemctl --user enable --now cloudflared-maintenance-tracker
+   ```
+
+**Future hardening to consider, not required to get this working:**
+Cloudflare's WAF and rate-limiting rules can add an edge-level layer in
+front of the app's own login lockout (5 attempts / 10-minute lockout) once
+this hostname sees real public traffic.
 
 For local development with auto-restart on file changes:
 
@@ -215,7 +290,7 @@ certs/                 TLS cert/key, gitignored
 
 ## Notes
 
-- Multi-user accounts (`bcrypt` + `express-session`), stored in the database. Every vehicle — and everything nested under one (service records, files, mileage logs, fuel logs, service types) — is scoped to the account that owns it; ownership is checked on every route that takes a vehicle id or a resource nested under one, including file downloads. Access control still primarily comes from the network (Tailscale ACLs / not exposing the port publicly); accounts are a second layer (data isolation between the people you've let onto your tailnet), not a substitute. Failed logins are rate-limited per IP (5 attempts, then a 10-minute lockout).
+- Multi-user accounts (`bcrypt` + `express-session`), stored in the database. Every vehicle — and everything nested under one (service records, files, mileage logs, fuel logs, service types) — is scoped to the account that owns it; ownership is checked on every route that takes a vehicle id or a resource nested under one, including file downloads. Access control still primarily comes from the network layer — Tailscale ACLs for the Tailscale path, Cloudflare Access for the optional public-tunnel path — not exposing the port publicly on its own; accounts are a second layer (data isolation between the people you've let in), not a substitute. Failed logins are rate-limited per IP (5 attempts, then a 10-minute lockout) — for requests arriving via the Cloudflare tunnel, this is keyed on Cloudflare's `CF-Connecting-IP` header rather than the loopback address `cloudflared` connects from (see `clientIp()` in `src/lib/auth.js`).
 - File uploads accept JPG, PNG, and PDF only, capped at `MAX_FILE_SIZE_MB` (default 15MB).
 - Vehicle `current_mileage` is automatically bumped whenever a new service record, mileage log, or fuel log entry has a higher mileage than what's on file.
 - Fuel log MPG is computed per fill-up (assumes each entry is a full-tank fill) as the mileage delta since the previous fill divided by gallons, plus a running average across all fill-ups — both charted on the vehicle page.

@@ -30,6 +30,12 @@ const app = express();
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Only trust X-Forwarded-* headers from a proxy connecting via loopback —
+// that's cloudflared (Cloudflare Tunnel), forwarding the public hostname to
+// the plain-HTTP listener in server.js. Direct Tailscale connections arrive
+// from remote peer IPs, never loopback, so this doesn't affect that path.
+app.set('trust proxy', 'loopback');
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(methodOverride('_method'));
@@ -37,7 +43,7 @@ app.use(session({
   secret: ensureSessionSecret(),
   resave: false,
   saveUninitialized: false,
-  cookie: { httpOnly: true, sameSite: 'lax', maxAge: 30 * 24 * 60 * 60 * 1000 }
+  cookie: { httpOnly: true, secure: true, sameSite: 'lax', maxAge: 30 * 24 * 60 * 60 * 1000 }
 }));
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use((req, res, next) => {

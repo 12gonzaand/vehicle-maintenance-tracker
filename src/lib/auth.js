@@ -68,6 +68,14 @@ function clearLoginAttempts(ip) {
   loginAttempts.delete(ip);
 }
 
+// req.ip is 127.0.0.1 for every request that arrives via the loopback
+// listener (cloudflared) — CF-Connecting-IP carries the real visitor IP for
+// that path, set by Cloudflare's edge and not spoofable through the tunnel.
+// Absent on the direct Tailscale path, where req.ip is already correct.
+function clientIp(req) {
+  return req.headers['cf-connecting-ip'] || req.ip;
+}
+
 // Only allow redirecting back to a same-app relative path. Rejects
 // protocol-relative ("//evil.com") and backslash ("/\evil.com") forms,
 // which browsers treat as absolute URLs to another host.
@@ -93,5 +101,5 @@ function requireAuth(req, res, next) {
 
 module.exports = {
   ensureSessionSecret, hashPassword, verifyCredentials, requireAuth, isSafeReturnTo,
-  checkLockout, recordFailedLogin, clearLoginAttempts
+  checkLockout, recordFailedLogin, clearLoginAttempts, clientIp
 };
