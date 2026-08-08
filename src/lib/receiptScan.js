@@ -1,9 +1,12 @@
 const FUEL_GRADES = ['Regular (87)', 'Mid-Grade (89)', 'Premium (91)', 'Premium (93)', 'Diesel', 'E85'];
 
-// Google's flash-tier models change name over time — override via
-// GEMINI_MODEL if this default has been superseded. Check
-// https://aistudio.google.com/apikey for the currently recommended one.
-const DEFAULT_MODEL = 'gemini-2.5-flash';
+// 'gemini-flash-latest' is a Google-maintained alias that always points at
+// their current recommended flash-tier model, rather than a pinned version
+// number — pinned versions get deprecated/removed for new API keys over
+// time (hit this directly: 'gemini-2.5-flash' 404'd with "no longer
+// available to new users" despite still being listed by the models API).
+// Override via GEMINI_MODEL if you want to pin a specific version anyway.
+const DEFAULT_MODEL = 'gemini-flash-latest';
 
 const SCHEMAS = {
   fuel: {
