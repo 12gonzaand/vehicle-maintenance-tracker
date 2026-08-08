@@ -114,8 +114,28 @@ reach that loopback listener.
    app's own login (below) still decides *whose data is whose* once someone
    is through; `/register` stays open the same way it does on the Tailscale
    path, because Access is already gating who gets there.
+
+   **Gotcha:** a brand new Zero Trust account only has the "Cloudflare"
+   identity provider available (i.e. logging in with an actual Cloudflare
+   account) — not what you want for inviting people who don't have one.
+   Add **One-Time PIN** under **Team & Resources → Identity providers**
+   (no config needed, just add it) so the login screen offers an
+   email-a-code option instead. Test in a private browser window — testing
+   in a normal window while you're logged into the Cloudflare dashboard can
+   mask this, since it may offer to sign you in as your own account instead
+   of showing the actual login screen a new visitor would see.
 3. Install `cloudflared` on the server (Cloudflare's apt repo or a direct
    binary download — a one-time root-level package install).
+
+   **Gotcha:** if the server is running a very new Ubuntu release,
+   `lsb_release -cs` may resolve to a codename Cloudflare's repo hasn't
+   published yet, causing a 404 on `apt-get update`. Check what codenames
+   actually exist first: `curl -s -o /dev/null -w '%{http_code}\n'
+   https://pkg.cloudflare.com/cloudflared/dists/noble/Release` (swap
+   `noble` for other codenames as needed). If your real codename 404s, pin
+   the apt source to the newest one that returns `200` instead —
+   `cloudflared` is a static binary with no distro-specific dependencies,
+   so an older codename works fine on a newer host.
 4. `cloudflared tunnel login` — opens a browser for a one-time OAuth flow
    authorizing this box against your Cloudflare account.
 5. `cloudflared tunnel create maintenance-tracker` — creates the tunnel and
