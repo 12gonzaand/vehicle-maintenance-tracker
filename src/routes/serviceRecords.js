@@ -37,7 +37,7 @@ function collectServiceTypeNames(body) {
 }
 
 router.get('/new', (req, res) => {
-  res.render('serviceRecords/form', { vehicle: req.vehicle, record: null, serviceTypes: ServiceType.all(req.user.id), error: null });
+  res.render('serviceRecords/form', { vehicle: req.vehicle, record: null, serviceTypes: ServiceType.checklist(req.user.id), error: null });
 });
 
 router.post('/', uploadStaged.array('files'), (req, res) => {
@@ -47,7 +47,7 @@ router.post('/', uploadStaged.array('files'), (req, res) => {
   const typeNames = collectServiceTypeNames(req.body);
   if (typeNames.length === 0) {
     return res.render('serviceRecords/form', {
-      vehicle: req.vehicle, record: null, serviceTypes: ServiceType.all(req.user.id),
+      vehicle: req.vehicle, record: null, serviceTypes: ServiceType.checklist(req.user.id),
       error: 'Select at least one service type.'
     });
   }
@@ -88,7 +88,7 @@ router.get('/:recordId', (req, res) => {
 });
 
 router.get('/:recordId/edit', (req, res) => {
-  res.render('serviceRecords/form', { vehicle: req.vehicle, record: req.record, serviceTypes: ServiceType.all(req.user.id), error: null });
+  res.render('serviceRecords/form', { vehicle: req.vehicle, record: req.record, serviceTypes: ServiceType.checklist(req.user.id), error: null });
 });
 
 router.post('/:recordId', (req, res) => {
@@ -98,7 +98,7 @@ router.post('/:recordId', (req, res) => {
   const typeNames = collectServiceTypeNames(req.body);
   if (typeNames.length === 0) {
     return res.render('serviceRecords/form', {
-      vehicle: req.vehicle, record: req.record, serviceTypes: ServiceType.all(req.user.id),
+      vehicle: req.vehicle, record: req.record, serviceTypes: ServiceType.checklist(req.user.id),
       error: 'Select at least one service type.'
     });
   }

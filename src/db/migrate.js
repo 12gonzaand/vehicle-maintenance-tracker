@@ -1,12 +1,25 @@
 const fs = require('fs');
 const path = require('path');
 const db = require('./index');
+const ServiceType = require('../models/serviceType');
 
 function migrate() {
   const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
   db.exec(schema);
   migrateToMultiUser();
   migrateServiceTypeToJunctionTable();
+  backfillDefaultServiceTypes();
+}
+
+// Keeps every existing user's default checklist in sync when DEFAULT_TYPES
+// gains an entry after their account was created (seedDefaults only runs
+// once, at signup). INSERT OR IGNORE makes this a no-op for names a user
+// already has.
+function backfillDefaultServiceTypes() {
+  const userIds = db.prepare('SELECT id FROM users').all().map((u) => u.id);
+  for (const userId of userIds) {
+    ServiceType.seedDefaults(userId);
+  }
 }
 
 function hasColumn(table, column) {

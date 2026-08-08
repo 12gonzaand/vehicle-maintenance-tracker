@@ -16,12 +16,23 @@ const DEFAULT_TYPES = [
   'Alignment',
   'Registration',
   'Inspection',
-  'Tire Replacement'
+  'Tire Replacement',
+  'Diag'
 ];
 
 const ServiceType = {
   all(userId) {
     return db.prepare('SELECT * FROM service_types WHERE user_id = ? ORDER BY name ASC').all(userId);
+  },
+
+  // The checkbox list on the service record form: only the standard set, so
+  // one-off names entered via the "Other" field don't pile up as checkboxes
+  // over time. Names not yet seeded for this user are skipped rather than
+  // inserted, keeping this read-only.
+  checklist(userId) {
+    const rows = db.prepare('SELECT * FROM service_types WHERE user_id = ? AND name IN (' + DEFAULT_TYPES.map(() => '?').join(',') + ')').all(userId, ...DEFAULT_TYPES);
+    const byName = new Map(rows.map((row) => [row.name, row]));
+    return DEFAULT_TYPES.map((name) => byName.get(name)).filter(Boolean);
   },
 
   ensure(userId, name) {
