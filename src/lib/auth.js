@@ -71,9 +71,18 @@ function clearLoginAttempts(ip) {
 // req.ip is 127.0.0.1 for every request that arrives via the loopback
 // listener (cloudflared) — CF-Connecting-IP carries the real visitor IP for
 // that path, set by Cloudflare's edge and not spoofable through the tunnel.
-// Absent on the direct Tailscale path, where req.ip is already correct.
+// Only honor it when the immediate connection is actually from loopback
+// (i.e. really came through cloudflared): both listeners share this app, so
+// a client connecting straight to the Tailscale-facing listener could
+// otherwise set that header itself and cycle fake IPs past the lockout.
+const LOOPBACK_ADDRESSES = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1']);
+
 function clientIp(req) {
-  return req.headers['cf-connecting-ip'] || req.ip;
+  const fromLoopback = req.socket && LOOPBACK_ADDRESSES.has(req.socket.remoteAddress);
+  if (fromLoopback && typeof req.headers['cf-connecting-ip'] === 'string') {
+    return req.headers['cf-connecting-ip'];
+  }
+  return req.ip;
 }
 
 // Only allow redirecting back to a same-app relative path. Rejects
