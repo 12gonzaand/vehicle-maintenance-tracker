@@ -27,8 +27,14 @@ const MileageLog = {
       SELECT log_date AS date, mileage, 'log' AS source, note AS label
       FROM mileage_logs WHERE vehicle_id = ?
       UNION ALL
-      SELECT service_date AS date, mileage, 'service' AS source, service_type AS label
-      FROM service_records WHERE vehicle_id = ? AND mileage IS NOT NULL
+      SELECT sr.service_date AS date, sr.mileage, 'service' AS source,
+        (SELECT GROUP_CONCAT(name, ', ') FROM (
+          SELECT st.name FROM service_record_types srt
+          JOIN service_types st ON st.id = srt.service_type_id
+          WHERE srt.service_record_id = sr.id
+          ORDER BY st.name
+        )) AS label
+      FROM service_records sr WHERE sr.vehicle_id = ? AND sr.mileage IS NOT NULL
       ORDER BY date ASC
     `).all(vehicleId, vehicleId);
   }
