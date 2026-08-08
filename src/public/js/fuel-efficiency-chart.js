@@ -76,7 +76,6 @@
     ctx.fill();
   });
 
-  ctx.font = '11px "IBM Plex Mono", monospace';
   ctx.fillStyle = textColor;
   ctx.fillText(minLabel, 2, baseY + 4);
   ctx.fillText(maxLabel, 2, topPadding - 4);
