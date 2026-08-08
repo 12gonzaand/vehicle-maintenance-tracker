@@ -17,7 +17,7 @@
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
 
-  const topPadding = 20;
+  const topPadding = 40; // clears the legend box drawn in the top-right corner
   const bottomPadding = 20;
 
   let sum = 0;
@@ -34,8 +34,9 @@
   const minLabel = minVal.toFixed(1) + ' mpg';
   const maxLabel = maxVal.toFixed(1) + ' mpg';
 
-  ctx.font = '11px "IBM Plex Mono", monospace';
-  const leftPadding = Math.max(ctx.measureText(minLabel).width, ctx.measureText(maxLabel).width) + 14;
+  const FONT = '11px "IBM Plex Mono", monospace';
+  const maxLabelWidth = ChartUtils.measureMaxLabelWidth(ctx, FONT, [minLabel, maxLabel]);
+  const leftPadding = Math.min(maxLabelWidth + 14, width * 0.4);
   const rightPadding = 10;
 
   const slot = (width - leftPadding - rightPadding) / points.length;
