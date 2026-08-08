@@ -37,7 +37,6 @@ CREATE TABLE IF NOT EXISTS service_types (
 CREATE TABLE IF NOT EXISTS service_records (
   id           INTEGER PRIMARY KEY AUTOINCREMENT,
   vehicle_id   INTEGER NOT NULL REFERENCES vehicles(id) ON DELETE CASCADE,
-  service_type TEXT NOT NULL,
   service_date TEXT NOT NULL,
   mileage      INTEGER,
   cost         REAL,
@@ -49,6 +48,15 @@ CREATE TABLE IF NOT EXISTS service_records (
 
 CREATE INDEX IF NOT EXISTS idx_service_records_vehicle_date
   ON service_records(vehicle_id, service_date);
+
+-- Many-to-many: a single record (one shop visit / one bill) can cover
+-- several service types (e.g. oil change + tire rotation on the same
+-- receipt) instead of forcing one record per type.
+CREATE TABLE IF NOT EXISTS service_record_types (
+  service_record_id INTEGER NOT NULL REFERENCES service_records(id) ON DELETE CASCADE,
+  service_type_id    INTEGER NOT NULL REFERENCES service_types(id) ON DELETE CASCADE,
+  PRIMARY KEY (service_record_id, service_type_id)
+);
 
 CREATE TABLE IF NOT EXISTS service_files (
   id                INTEGER PRIMARY KEY AUTOINCREMENT,

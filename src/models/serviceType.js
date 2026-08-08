@@ -28,6 +28,17 @@ const ServiceType = {
     db.prepare('INSERT OR IGNORE INTO service_types (user_id, name) VALUES (?, ?)').run(userId, name);
   },
 
+  // Ensures every name exists for this user, then returns their ids (order
+  // not guaranteed to match input order — callers only need the set).
+  ensureAndGetIds(userId, names) {
+    const ensure = db.prepare('INSERT OR IGNORE INTO service_types (user_id, name) VALUES (?, ?)');
+    const findId = db.prepare('SELECT id FROM service_types WHERE user_id = ? AND name = ?');
+    return names.map((name) => {
+      ensure.run(userId, name);
+      return findId.get(userId, name).id;
+    });
+  },
+
   seedDefaults(userId) {
     const insert = db.prepare('INSERT OR IGNORE INTO service_types (user_id, name) VALUES (?, ?)');
     const insertAll = db.transaction((types) => {
