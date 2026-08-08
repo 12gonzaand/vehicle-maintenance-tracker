@@ -34,7 +34,7 @@ No auth secrets belong in `.env`. The session secret is generated automatically 
 The app serves HTTPS on your Tailscale interface, using a cert in `certs/` (gitignored). This must be a real Tailscale-issued cert, not a self-signed one, or browsers show a permanent security warning. (It also listens on plain HTTP on `127.0.0.1` only, for the optional Cloudflare Tunnel path below — that listener is unreachable from outside the box.) Set up the Tailscale cert once:
 
 1. In the [Tailscale admin console](https://login.tailscale.com/admin/dns), enable **MagicDNS**, then enable **HTTPS Certificates** (requires MagicDNS).
-2. Issue the cert for this node's MagicDNS name (find it with `tailscale status`, e.g. `andrews-home-server.tailf850c4.ts.net`):
+2. Issue the cert for this node's MagicDNS name (find it with `tailscale status`, e.g. `my-server.abc123de.ts.net`):
 
 ```bash
 mkdir -p certs
@@ -197,7 +197,7 @@ reach that loopback listener.
 
    ```yaml
    tunnel: maintenance-tracker
-   credentials-file: /home/andrew/.cloudflared/<tunnel-id>.json
+   credentials-file: /home/<youruser>/.cloudflared/<tunnel-id>.json
 
    ingress:
      - hostname: maintenance.yourdomain.com
@@ -250,10 +250,10 @@ Description=Vehicle Maintenance Tracker
 After=network.target
 
 [Service]
-WorkingDirectory=/home/andrew/maintenance-tracker
-ExecStart=/home/andrew/.nvm/versions/node/v24.18.0/bin/node src/server.js
+WorkingDirectory=/home/<youruser>/maintenance-tracker
+ExecStart=/home/<youruser>/.nvm/versions/node/v24.18.0/bin/node src/server.js
 Restart=on-failure
-EnvironmentFile=/home/andrew/maintenance-tracker/.env
+EnvironmentFile=/home/<youruser>/maintenance-tracker/.env
 
 [Install]
 WantedBy=default.target
@@ -294,7 +294,7 @@ Description=Renew Tailscale TLS cert for maintenance-tracker
 
 [Service]
 Type=oneshot
-ExecStart=/home/andrew/maintenance-tracker/scripts/renew-cert.sh
+ExecStart=/home/<youruser>/maintenance-tracker/scripts/renew-cert.sh
 ```
 
 and `~/.config/systemd/user/maintenance-tracker-cert-renew.timer`:
