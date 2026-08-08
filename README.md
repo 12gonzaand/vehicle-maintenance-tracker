@@ -197,7 +197,7 @@ reach that loopback listener.
 
    ```yaml
    tunnel: maintenance-tracker
-   credentials-file: /home/youruser/.cloudflared/<tunnel-id>.json
+   credentials-file: /home/<youruser>/.cloudflared/<tunnel-id>.json
 
    ingress:
      - hostname: maintenance.yourdomain.com
@@ -250,10 +250,10 @@ Description=Vehicle Maintenance Tracker
 After=network.target
 
 [Service]
-WorkingDirectory=/home/youruser/maintenance-tracker
-ExecStart=/home/youruser/.nvm/versions/node/v24.18.0/bin/node src/server.js
+WorkingDirectory=/home/<youruser>/maintenance-tracker
+ExecStart=/home/<youruser>/.nvm/versions/node/v24.18.0/bin/node src/server.js
 Restart=on-failure
-EnvironmentFile=/home/youruser/maintenance-tracker/.env
+EnvironmentFile=/home/<youruser>/maintenance-tracker/.env
 
 [Install]
 WantedBy=default.target
@@ -294,7 +294,7 @@ Description=Renew Tailscale TLS cert for maintenance-tracker
 
 [Service]
 Type=oneshot
-ExecStart=/home/youruser/maintenance-tracker/scripts/renew-cert.sh
+ExecStart=/home/<youruser>/maintenance-tracker/scripts/renew-cert.sh
 ```
 
 and `~/.config/systemd/user/maintenance-tracker-cert-renew.timer`:
