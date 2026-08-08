@@ -27,11 +27,16 @@ const ReminderRule = {
     db.prepare('DELETE FROM reminder_rules WHERE id = ?').run(id);
   },
 
+  // A record now covers a set of service types (see service_record_types),
+  // so this matches any record that includes serviceType among them —
+  // not only a record whose sole type happens to equal it.
   lastServiceFor(vehicleId, serviceType) {
     return db.prepare(`
-      SELECT * FROM service_records
-      WHERE vehicle_id = ? AND service_type = ?
-      ORDER BY service_date DESC, mileage DESC
+      SELECT sr.* FROM service_records sr
+      JOIN service_record_types srt ON srt.service_record_id = sr.id
+      JOIN service_types st ON st.id = srt.service_type_id
+      WHERE sr.vehicle_id = ? AND st.name = ?
+      ORDER BY sr.service_date DESC, sr.mileage DESC
       LIMIT 1
     `).get(vehicleId, serviceType);
   },

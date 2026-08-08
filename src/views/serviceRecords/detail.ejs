@@ -1,9 +1,13 @@
-<%- include('../partials/header', { title: record.service_type }) %>
+<%- include('../partials/header', { title: record.serviceTypes.join(', ') }) %>
 
 <p class="breadcrumb"><a href="/vehicles/<%= vehicle.id %>">&larr; <%= vehicle.name %></a></p>
 
 <div class="page-header">
-  <h1><%= record.service_type %></h1>
+  <h1 class="service-type-badges">
+    <% record.serviceTypes.forEach(name => { %>
+      <span class="badge"><%= name %></span>
+    <% }) %>
+  </h1>
   <div class="page-actions">
     <a class="btn" href="/vehicles/<%= vehicle.id %>/records/<%= record.id %>/edit">Edit</a>
     <form method="post" action="/vehicles/<%= vehicle.id %>/records/<%= record.id %>/delete" class="inline-form" onsubmit="return confirm('Delete this service record and its attached files?');">

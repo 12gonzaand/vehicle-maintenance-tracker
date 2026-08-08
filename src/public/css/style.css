@@ -278,6 +278,8 @@ h2 { margin-top: 0; font-size: 1.2rem; }
 .badge-due-soon { background: var(--amber); border-color: var(--amber); color: #1a0d04; }
 .badge-ok { background: var(--ok-green); border-color: var(--ok-green); color: #1a0d04; }
 
+.service-type-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+
 /* ---------- reminders ---------- */
 
 .reminders-table { min-width: 420px; }
@@ -494,6 +496,39 @@ input:focus, select:focus, textarea:focus { border-color: var(--orange); }
 
 .receipt-scan-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
 .receipt-scan-status { font-size: 0.8rem; color: var(--ink-muted); }
+
+.form-error { color: var(--danger); font-size: 0.85rem; margin: 0; }
+
+.service-type-checks {
+  border: 1px solid var(--border-strong);
+  border-radius: 2px;
+  padding: 0.6rem 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+.service-type-checks legend {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
+  padding: 0 0.3rem;
+}
+/* .form label (elsewhere in this file) has higher specificity than a bare
+   .service-type-check class alone would, so this stays qualified under
+   .service-type-checks to reliably win the cascade. */
+.service-type-checks .service-type-check {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: 'IBM Plex Sans', sans-serif;
+  text-transform: none;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+.service-type-checks .service-type-check input { width: auto; padding: 0; }
 
 /* ---------- tables ---------- */
 

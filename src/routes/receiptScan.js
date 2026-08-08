@@ -10,12 +10,15 @@ const VALID_KINDS = new Set(['fuel', 'service']);
 // just means "fill in manually," not a broken page. req.vehicle (set by
 // the app.js-level loadOwnedVehicle middleware) isn't used for anything
 // beyond the ownership gate itself; this route doesn't touch the DB.
+// Up to 6 images per scan — enough for any realistic multi-page invoice;
+// multer rejects a 7th with a normal error, surfaced the same as any other
+// upload error below.
 router.post('/', (req, res) => {
-  uploadReceiptScan.single('receipt')(req, res, async (uploadErr) => {
+  uploadReceiptScan.array('receipt', 6)(req, res, async (uploadErr) => {
     if (uploadErr) {
       return res.status(400).json({ ok: false, error: uploadErr.message });
     }
-    if (!req.file) {
+    if (!req.files || req.files.length === 0) {
       return res.status(400).json({ ok: false, error: 'No receipt image was uploaded.' });
     }
     const kind = req.body.kind;
@@ -24,7 +27,8 @@ router.post('/', (req, res) => {
     }
 
     try {
-      const fields = await scanReceipt({ kind, mimeType: req.file.mimetype, buffer: req.file.buffer });
+      const files = req.files.map((f) => ({ mimeType: f.mimetype, buffer: f.buffer }));
+      const fields = await scanReceipt({ kind, files });
       res.json({ ok: true, fields });
     } catch (err) {
       res.json({ ok: false, error: err.message });

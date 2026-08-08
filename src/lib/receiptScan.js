@@ -29,25 +29,26 @@ const SCHEMAS = {
       mileage: { type: 'NUMBER', nullable: true, description: 'Odometer reading in miles at time of service, or null if not shown.' },
       cost: { type: 'NUMBER', nullable: true, description: 'Total dollar amount charged, or null if not visible.' },
       shop: { type: 'STRING', nullable: true, description: 'Name of the shop/business that performed the service, or null if not identifiable.' },
-      service_type: {
-        type: 'STRING', nullable: true,
-        description: 'A short description of the primary service performed (e.g. "Oil Change", "Brake Replacement", "Tire Rotation"), or null if unclear.'
+      service_types: {
+        type: 'ARRAY', items: { type: 'STRING' },
+        description: 'Every distinct service performed, e.g. ["Oil Change", "Tire Rotation"]. Empty array if unclear.'
       }
     }
   }
 };
 
 const PROMPTS = {
-  fuel: 'This image is a receipt from a gas station fill-up. Extract the requested fields exactly as they appear on the receipt. If a field is not visible or not applicable, return null for it rather than guessing.',
-  service: 'This image is a receipt or invoice from an auto repair/maintenance shop. Extract the requested fields exactly as they appear on the receipt. If a field is not visible or not applicable, return null for it rather than guessing.'
+  fuel: 'This image is a receipt from a gas station fill-up. If more than one image is provided, they are multiple photos of the same receipt (e.g. separate pages) — combine information across all of them into one answer. Extract the requested fields exactly as they appear. If a field is not visible or not applicable, return null for it rather than guessing.',
+  service: 'These images are a receipt or invoice from an auto repair/maintenance shop. If more than one image is provided, they are multiple pages of the same bill — combine information across all of them into one answer, and list every distinct service line item across all pages in service_types. Extract the requested fields exactly as they appear. If a field is not visible or not applicable, return null for it rather than guessing.'
 };
 
-// kind: 'fuel' | 'service'. mimeType/buffer: the uploaded image (see
-// middleware/upload.js's uploadReceiptScan, memory storage — never written
-// to disk). Returns the extracted fields object, or throws an Error with a
-// message safe to show the user (never includes the API key or raw
-// response body, which could echo account details back).
-async function scanReceipt({ kind, mimeType, buffer }) {
+// kind: 'fuel' | 'service'. files: [{ mimeType, buffer }, ...] — one or
+// more images of the same receipt (see middleware/upload.js's
+// uploadReceiptScan, memory storage — never written to disk). Returns the
+// extracted fields object, or throws an Error with a message safe to show
+// the user (never includes the API key or raw response body, which could
+// echo account details back).
+async function scanReceipt({ kind, files }) {
   const schema = SCHEMAS[kind];
   if (!schema) throw new Error(`Unknown receipt kind: ${kind}`);
 
@@ -61,7 +62,7 @@ async function scanReceipt({ kind, mimeType, buffer }) {
     contents: [{
       parts: [
         { text: PROMPTS[kind] },
-        { inline_data: { mime_type: mimeType, data: buffer.toString('base64') } }
+        ...files.map((f) => ({ inline_data: { mime_type: f.mimeType, data: f.buffer.toString('base64') } }))
       ]
     }],
     generationConfig: {

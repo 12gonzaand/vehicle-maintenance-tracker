@@ -6,6 +6,7 @@ function migrate() {
   const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
   db.exec(schema);
   migrateToMultiUser();
+  migrateServiceTypeToJunctionTable();
 }
 
 function hasColumn(table, column) {
@@ -77,6 +78,40 @@ function migrateServiceTypesToPerUser(ownerId) {
     db.exec('ALTER TABLE service_types_new RENAME TO service_types');
   });
   rebuild();
+}
+
+// One-time upgrade from a single service_type column on service_records to
+// a many-to-many join through service_record_types, so one record (one
+// shop visit / one bill) can cover multiple service types instead of
+// forcing a separate record per type. Guarded the same way as
+// migrateToMultiUser above: a no-op once the old column is gone, and fresh
+// installs never see it since schema.sql already creates the final shape.
+// Runs after migrateToMultiUser so every vehicle's user_id is already
+// resolved by the time this scopes service_types per owner.
+function migrateServiceTypeToJunctionTable() {
+  if (!hasColumn('service_records', 'service_type')) return;
+
+  const run = db.transaction(() => {
+    const records = db.prepare(`
+      SELECT sr.id AS record_id, sr.service_type, v.user_id
+      FROM service_records sr
+      JOIN vehicles v ON v.id = sr.vehicle_id
+    `).all();
+
+    const ensureType = db.prepare('INSERT OR IGNORE INTO service_types (user_id, name) VALUES (?, ?)');
+    const findTypeId = db.prepare('SELECT id FROM service_types WHERE user_id = ? AND name = ?');
+    const linkType = db.prepare('INSERT OR IGNORE INTO service_record_types (service_record_id, service_type_id) VALUES (?, ?)');
+
+    for (const r of records) {
+      if (r.user_id == null) continue; // orphaned row with no owning user — nothing to scope a type to
+      ensureType.run(r.user_id, r.service_type);
+      const typeRow = findTypeId.get(r.user_id, r.service_type);
+      linkType.run(r.record_id, typeRow.id);
+    }
+
+    db.exec('ALTER TABLE service_records DROP COLUMN service_type');
+  });
+  run();
 }
 
 module.exports = migrate;

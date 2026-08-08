@@ -25,18 +25,36 @@ router.param('fileId', (req, res, next, fileId) => {
   next();
 });
 
+// Checkboxes (name="service_types") cover the common/known types; a
+// comma-separated free-text field (name="other_types") covers anything
+// not already in that list. Combined and deduped here since a record can
+// now cover more than one type (e.g. an oil change + tire rotation on the
+// same bill), instead of forcing a separate record per type.
+function collectServiceTypeNames(body) {
+  const checked = [].concat(body.service_types || []);
+  const other = (body.other_types || '').split(',').map((s) => s.trim()).filter(Boolean);
+  return Array.from(new Set([...checked, ...other]));
+}
+
 router.get('/new', (req, res) => {
-  res.render('serviceRecords/form', { vehicle: req.vehicle, record: null, serviceTypes: ServiceType.all(req.user.id) });
+  res.render('serviceRecords/form', { vehicle: req.vehicle, record: null, serviceTypes: ServiceType.all(req.user.id), error: null });
 });
 
 router.post('/', uploadStaged.array('files'), (req, res) => {
   const vehicleId = req.vehicle.id;
-  const { service_type, service_date, mileage, cost, notes, shop } = req.body;
+  const { service_date, mileage, cost, notes, shop } = req.body;
 
-  ServiceType.ensure(req.user.id, service_type);
+  const typeNames = collectServiceTypeNames(req.body);
+  if (typeNames.length === 0) {
+    return res.render('serviceRecords/form', {
+      vehicle: req.vehicle, record: null, serviceTypes: ServiceType.all(req.user.id),
+      error: 'Select at least one service type.'
+    });
+  }
+  const service_type_ids = ServiceType.ensureAndGetIds(req.user.id, typeNames);
 
   const record = ServiceRecord.create(vehicleId, {
-    service_type,
+    service_type_ids,
     service_date,
     mileage: mileage ? Number(mileage) : null,
     cost: cost ? Number(cost) : null,
@@ -70,17 +88,24 @@ router.get('/:recordId', (req, res) => {
 });
 
 router.get('/:recordId/edit', (req, res) => {
-  res.render('serviceRecords/form', { vehicle: req.vehicle, record: req.record, serviceTypes: ServiceType.all(req.user.id) });
+  res.render('serviceRecords/form', { vehicle: req.vehicle, record: req.record, serviceTypes: ServiceType.all(req.user.id), error: null });
 });
 
 router.post('/:recordId', (req, res) => {
   const vehicleId = req.vehicle.id;
-  const { service_type, service_date, mileage, cost, notes, shop } = req.body;
+  const { service_date, mileage, cost, notes, shop } = req.body;
 
-  ServiceType.ensure(req.user.id, service_type);
+  const typeNames = collectServiceTypeNames(req.body);
+  if (typeNames.length === 0) {
+    return res.render('serviceRecords/form', {
+      vehicle: req.vehicle, record: req.record, serviceTypes: ServiceType.all(req.user.id),
+      error: 'Select at least one service type.'
+    });
+  }
+  const service_type_ids = ServiceType.ensureAndGetIds(req.user.id, typeNames);
 
   const record = ServiceRecord.update(req.record.id, {
-    service_type,
+    service_type_ids,
     service_date,
     mileage: mileage ? Number(mileage) : null,
     cost: cost ? Number(cost) : null,

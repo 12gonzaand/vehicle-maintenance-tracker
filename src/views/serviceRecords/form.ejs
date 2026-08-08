@@ -4,13 +4,23 @@
 <h1><%= record ? 'Edit Service Record' : 'Add Service Record' %></h1>
 
 <form method="post" action="<%= record ? `/vehicles/${vehicle.id}/records/${record.id}` : `/vehicles/${vehicle.id}/records` %>" class="form"<% if (!record) { %> enctype="multipart/form-data"<% } %>>
-  <label>Service Type
-    <input list="service-type-options" name="service_type" required value="<%= record ? record.service_type : '' %>">
-    <datalist id="service-type-options">
-      <% serviceTypes.forEach(st => { %>
-        <option value="<%= st.name %>">
-      <% }) %>
-    </datalist>
+  <% if (error) { %>
+    <p class="form-error"><%= error %></p>
+  <% } %>
+  <fieldset class="service-type-checks">
+    <legend>Service Type(s) — check all that were performed on this bill</legend>
+    <% serviceTypes.forEach(st => { %>
+      <label class="service-type-check">
+        <input type="checkbox" name="service_types" value="<%= st.name %>"
+          <%= record && record.serviceTypes && record.serviceTypes.includes(st.name) ? 'checked' : '' %>>
+        <%= st.name %>
+      </label>
+    <% }) %>
+  </fieldset>
+  <label>Other (not listed above — comma-separated if more than one)
+    <% const knownNames = serviceTypes.map(st => st.name);
+       const otherNames = record && record.serviceTypes ? record.serviceTypes.filter(n => !knownNames.includes(n)) : []; %>
+    <input type="text" name="other_types" value="<%= otherNames.join(', ') %>">
   </label>
   <div class="form-row">
     <label>Date Performed

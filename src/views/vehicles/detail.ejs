@@ -145,7 +145,7 @@
       <% records.forEach(r => { %>
         <tr onclick="window.location='/vehicles/<%= vehicle.id %>/records/<%= r.id %>'" class="clickable-row">
           <td><%= r.service_date %></td>
-          <td><%= r.service_type %></td>
+          <td><%= r.type_names %></td>
           <td><%= r.mileage != null ? r.mileage.toLocaleString() : '—' %></td>
           <td><%= r.cost != null ? '$' + r.cost.toFixed(2) : '—' %></td>
           <td><%= r.shop || '—' %></td>
@@ -205,7 +205,7 @@
   <form method="post" action="/vehicles/<%= vehicle.id %>/fuel-logs" class="form form-inline">
     <div class="receipt-scan-row">
       <label>Receipt Photo (optional — used to autofill below, not saved)
-        <input type="file" id="fuel-receipt-photo" accept="image/jpeg,image/png">
+        <input type="file" id="fuel-receipt-photo" accept="image/jpeg,image/png" multiple>
       </label>
       <button type="button" class="btn btn-small" id="fuel-scan-btn" data-vehicle-id="<%= vehicle.id %>">Scan receipt to autofill</button>
       <span class="receipt-scan-status" id="fuel-scan-status"></span>
