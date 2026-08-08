@@ -1,4 +1,7 @@
-const FUEL_GRADES = ['Regular (87)', 'Mid-Grade (89)', 'Premium (91)', 'Premium (93)', 'Diesel', 'E85'];
+const FUEL_GRADES = [
+  'Regular (85)', 'Regular (87)', 'Ethanol Free (88)', 'Mid-Grade (89)',
+  'Premium (91)', 'Premium (93)', 'Diesel', 'E85'
+];
 
 // 'gemini-flash-latest' is a Google-maintained alias that always points at
 // their current recommended flash-tier model, rather than a pinned version
