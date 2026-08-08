@@ -481,6 +481,7 @@ h2 { margin-top: 0; font-size: 1.2rem; }
 
 input, select, textarea {
   max-width: 100%;
+  min-width: 0;
   padding: 0.55rem 0.6rem;
   border: 1px solid var(--border-strong);
   background: var(--input-bg);
