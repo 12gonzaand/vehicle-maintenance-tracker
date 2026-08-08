@@ -327,12 +327,14 @@ h2 { margin-top: 0; font-size: 1.2rem; }
 /* ---------- vehicle hero ---------- */
 
 .vehicle-hero {
-  position: relative;
   border: 1px solid var(--hairline);
   border-radius: var(--radius);
   overflow: hidden;
   margin-bottom: 1.5rem;
   background: var(--surface);
+}
+.vehicle-hero-media {
+  position: relative;
 }
 .vehicle-hero-photo {
   width: 100%;
