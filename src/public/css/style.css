@@ -492,6 +492,9 @@ input:focus, select:focus, textarea:focus { border-color: var(--orange); }
 
 .form-actions { display: flex; gap: 0.5rem; margin-top: 0.25rem; }
 
+.receipt-scan-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.receipt-scan-status { font-size: 0.8rem; color: var(--ink-muted); }
+
 /* ---------- tables ---------- */
 
 .table-scroll { overflow-x: auto; margin-bottom: 1rem; }

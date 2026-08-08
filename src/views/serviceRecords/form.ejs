@@ -31,8 +31,12 @@
   </label>
   <% if (!record) { %>
   <label>Receipts / Invoice Photos (optional, JPG/PNG/PDF)
-    <input type="file" name="files" accept="image/jpeg,image/png,application/pdf" multiple>
+    <input type="file" id="service-receipt-files" name="files" accept="image/jpeg,image/png,application/pdf" multiple>
   </label>
+  <div class="receipt-scan-row">
+    <button type="button" class="btn btn-small" id="service-scan-btn" data-vehicle-id="<%= vehicle.id %>">Scan receipt to autofill</button>
+    <span class="receipt-scan-status" id="service-scan-status"></span>
+  </div>
   <% } %>
   <div class="form-actions">
     <button type="submit" class="btn btn-primary"><%= record ? 'Save Changes' : 'Add Record' %></button>
@@ -40,4 +44,7 @@
   </div>
 </form>
 
+<% if (!record) { %>
+<script src="/public/js/receipt-scan.js"></script>
+<% } %>
 <%- include('../partials/footer') %>

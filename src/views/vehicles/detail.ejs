@@ -203,6 +203,13 @@
   </div>
 
   <form method="post" action="/vehicles/<%= vehicle.id %>/fuel-logs" class="form form-inline">
+    <div class="receipt-scan-row">
+      <label>Receipt Photo (optional — used to autofill below, not saved)
+        <input type="file" id="fuel-receipt-photo" accept="image/jpeg,image/png">
+      </label>
+      <button type="button" class="btn btn-small" id="fuel-scan-btn" data-vehicle-id="<%= vehicle.id %>">Scan receipt to autofill</button>
+      <span class="receipt-scan-status" id="fuel-scan-status"></span>
+    </div>
     <label>Date
       <input type="date" name="fill_date" required>
     </label>

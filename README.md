@@ -5,6 +5,7 @@ Self-hosted web app for tracking maintenance on personal vehicles. Node.js + Exp
 ## Features
 
 - Vehicles with photos, service records (with receipt/invoice file attachments), mileage history, and per-tank fuel log tracking (grade, cost, gallons, mileage — auto-computes MPG per fill-up plus a running average, charted).
+- Optional: scan a receipt photo to auto-fill the fuel log or service record form (see [Receipt scanning](#receipt-scanning-optional)) — Gemini's free tier reads the fields off the photo, you review/correct before saving.
 - Maintenance reminders: per-vehicle rules ("every 5,000 mi" and/or "every 6 months" for a given service type), tracked against the most recent matching service record and shown as OK / Due soon / Overdue.
 - Multi-user: anyone who can reach the server can register their own account at `/register`; each account's vehicles, records, and files are fully isolated from every other account's.
 - Session-based login with per-IP rate limiting (5 failed attempts locks that IP out for 10 minutes).
@@ -45,6 +46,42 @@ The app must be accessed via that MagicDNS hostname, not the raw Tailscale IP �
 HTTPS is required so phone browsers (Android in particular) treat the page as a secure context — otherwise the camera/file-capture APIs used for receipt and vehicle photos are blocked entirely.
 
 Tailscale certs expire periodically and need renewal — see [Cert renewal](#cert-renewal) below for the automated setup.
+
+## Receipt scanning (optional)
+
+"Scan receipt to autofill" on the fuel log and Add Service Record forms
+sends the receipt photo to Google's Gemini API (free tier) and uses the
+extracted fields to pre-fill the form — you still review and correct
+before saving, it never submits anything on its own.
+
+1. Get a free API key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) (no GCP billing account needed).
+2. Add it to `.env`:
+
+```
+GEMINI_API_KEY=your-key-here
+```
+
+3. Restart the service. If `GEMINI_API_KEY` is unset, the scan button just
+   shows a "not configured" message — every form still works exactly as
+   it did before this feature existed, nothing is required.
+
+`GEMINI_MODEL` is an optional override in `.env` if the app's default
+flash-tier model name has been superseded by the time you're reading
+this — check the same aistudio.google.com page for Google's current
+recommendation.
+
+For service records, the receipt photo is both scanned **and** saved as a
+permanent attachment (same as it always was) — scanning doesn't change
+that. Fuel log receipts are **scan-only**: the photo is sent to Gemini
+purely to read the numbers off it, then discarded — nothing new is stored
+for fuel logs, since they had no attachment storage before this feature
+either.
+
+**Privacy note:** the receipt photo itself is sent to Google's Gemini API
+for this to work — worth knowing since receipts occasionally show partial
+card numbers or other personal details. Free-tier usage limits are
+Google's to enforce; this app adds no additional rate-limiting beyond the
+existing login/network access controls.
 
 ## Run
 
