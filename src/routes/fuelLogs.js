@@ -13,10 +13,14 @@ router.param('logId', (req, res, next, logId) => {
 router.post('/', (req, res) => {
   const vehicleId = req.vehicle.id;
   const { fill_date, mileage, gallons, cost, fuel_grade } = req.body;
+  const mileageNum = Number(mileage);
+  const gallonsNum = Number(gallons);
+  if (!Number.isFinite(mileageNum)) return res.status(400).send('Mileage must be a number.');
+  if (!Number.isFinite(gallonsNum)) return res.status(400).send('Gallons must be a number.');
   const log = FuelLog.create(vehicleId, {
     fill_date,
-    mileage: Number(mileage),
-    gallons: Number(gallons),
+    mileage: mileageNum,
+    gallons: gallonsNum,
     cost: cost ? Number(cost) : null,
     fuel_grade: fuel_grade || null
   });

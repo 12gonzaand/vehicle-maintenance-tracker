@@ -13,8 +13,10 @@ router.param('logId', (req, res, next, logId) => {
 router.post('/', (req, res) => {
   const vehicleId = req.vehicle.id;
   const { mileage, log_date, note } = req.body;
+  const mileageNum = Number(mileage);
+  if (!Number.isFinite(mileageNum)) return res.status(400).send('Mileage must be a number.');
   const log = MileageLog.create(vehicleId, {
-    mileage: Number(mileage),
+    mileage: mileageNum,
     log_date,
     note
   });

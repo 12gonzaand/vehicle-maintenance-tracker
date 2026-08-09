@@ -38,6 +38,18 @@ app.set('views', path.join(__dirname, 'views'));
 // from remote peer IPs, never loopback, so this doesn't affect that path.
 app.set('trust proxy', 'loopback');
 
+// Nothing in this app is meant to be embedded in another site's page —
+// without this, a third party could iframe an authenticated page and use
+// a click-redress overlay to trick a logged-in user into e.g. deleting
+// their own vehicle. SameSite=Lax cookies don't prevent this, since the
+// iframe's requests to this origin aren't cross-site from the cookie's
+// point of view.
+app.use((req, res, next) => {
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'none'");
+  next();
+});
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(methodOverride('_method'));
@@ -102,7 +114,7 @@ app.use('/vehicles/:vehicleId/receipt-scan', requireAuth, loadOwnedVehicle, rece
 
 app.use((err, req, res, next) => {
   console.error(err);
-  res.status(500).send(`Error: ${err.message}`);
+  res.status(500).send('Something went wrong. Please try again.');
 });
 
 module.exports = app;
