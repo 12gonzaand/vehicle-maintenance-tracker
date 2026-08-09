@@ -15,6 +15,7 @@ const { loadOwnedVehicle } = require('./middleware/ownership');
 const { UPLOADS_DIR } = require('./middleware/upload');
 const ServiceRecord = require('./models/serviceRecord');
 const ServiceFile = require('./models/serviceFile');
+const User = require('./models/user');
 
 // New uploads always get .jpg/.png/.pdf (see middleware/upload.js), but
 // vehicle photos uploaded before that normalization existed may still be on
@@ -87,6 +88,11 @@ app.get('/uploads/vehicles/:vehicleId/records/:recordId/:filename', requireAuth,
 
 app.get('/', (req, res) => res.redirect('/vehicles'));
 app.get('/settings', requireAuth, (req, res) => res.render('settings'));
+app.post('/settings/display-name', requireAuth, (req, res) => {
+  const displayName = (req.body.display_name || '').trim().slice(0, 40);
+  User.updateDisplayName(req.user.id, displayName);
+  res.redirect('/settings');
+});
 app.use('/vehicles', requireAuth, vehiclesRouter);
 app.use('/vehicles/:vehicleId/records', requireAuth, loadOwnedVehicle, serviceRecordsRouter);
 app.use('/vehicles/:vehicleId/mileage-logs', requireAuth, loadOwnedVehicle, mileageLogsRouter);

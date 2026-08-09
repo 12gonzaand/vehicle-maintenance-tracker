@@ -34,7 +34,7 @@
 </head>
 <body>
   <header class="site-header">
-    <a href="/vehicles" class="brand">Maintenance Tracker</a>
+    <a href="/vehicles" class="brand"><%= (typeof currentUser !== 'undefined' && currentUser && currentUser.display_name) || 'Maintenance Tracker' %></a>
     <% if (typeof session !== 'undefined' && session && session.userId) { %>
       <div class="header-actions">
         <% if (typeof currentUser !== 'undefined' && currentUser) { %>

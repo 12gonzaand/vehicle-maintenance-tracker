@@ -18,6 +18,10 @@ const User = {
 
   updatePassword(id, passwordHash) {
     db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(passwordHash, id);
+  },
+
+  updateDisplayName(id, displayName) {
+    db.prepare('UPDATE users SET display_name = ? WHERE id = ?').run(displayName || null, id);
   }
 };
 

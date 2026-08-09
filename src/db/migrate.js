@@ -9,6 +9,17 @@ function migrate() {
   migrateToMultiUser();
   migrateServiceTypeToJunctionTable();
   backfillDefaultServiceTypes();
+  migrateAddUserDisplayName();
+}
+
+// Header brand text ("Maintenance Tracker") is customizable per-user; falls
+// back to that default when unset. Guarded/idempotent like the other
+// migrations above — schema.sql already creates fresh installs with this
+// column, so this is a no-op there.
+function migrateAddUserDisplayName() {
+  if (!hasColumn('users', 'display_name')) {
+    db.exec('ALTER TABLE users ADD COLUMN display_name TEXT');
+  }
 }
 
 // Keeps every existing user's default checklist in sync when DEFAULT_TYPES

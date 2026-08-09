@@ -14,5 +14,16 @@
   </div>
 </section>
 
+<section class="section">
+  <div class="section-header">
+    <h2>Header Name</h2>
+  </div>
+  <p class="subtitle" style="margin: 0 0 0.9rem;">What shows up top-left instead of "Maintenance Tracker" &mdash; just for your account.</p>
+  <form method="post" action="/settings/display-name" class="form form-inline">
+    <input type="text" name="display_name" maxlength="40" placeholder="Maintenance Tracker" value="<%= currentUser.display_name || '' %>">
+    <button type="submit" class="btn">Save</button>
+  </form>
+</section>
+
 <script src="/public/js/theme.js"></script>
 <%- include('partials/footer') %>
