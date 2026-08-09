@@ -60,6 +60,21 @@ document.querySelectorAll('[data-service-type-picker]').forEach((picker) => {
     select.value = '';
   });
 
+  // Lets other scripts (receipt-scan.js) add a chip for a name it
+  // recognizes, e.g. one Gemini read off a scanned receipt. Returns whether
+  // the name matched one of this picker's known options, so the caller can
+  // route anything unmatched to the "Other" field instead.
+  picker.addServiceType = function (name) {
+    const known = Array.from(select.options).some((opt) => opt.value === name);
+    if (!known) return false;
+    if (!selected.includes(name)) {
+      selected.push(name);
+      renderChips();
+      syncOptions();
+    }
+    return true;
+  };
+
   renderChips();
   syncOptions();
 });

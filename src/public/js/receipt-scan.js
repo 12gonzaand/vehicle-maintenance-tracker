@@ -12,18 +12,18 @@
     el.value = value;
   }
 
-  // Ticks the checkbox for each returned service type that has one;
-  // anything without a matching checkbox (a service Gemini identified that
-  // isn't in the known list) goes into the "Other" text field instead.
+  // Adds a chip (via the picker's own addServiceType) for each returned
+  // service type that's in the known list; anything Gemini identified that
+  // isn't goes into the "Other" text field instead.
   function fillServiceTypes(form, names) {
     if (!Array.isArray(names) || names.length === 0) return;
+    const picker = form.querySelector('[data-service-type-picker]');
     const matched = new Set();
-    form.querySelectorAll('input[name="service_types"]').forEach((cb) => {
-      if (names.includes(cb.value)) {
-        cb.checked = true;
-        matched.add(cb.value);
-      }
-    });
+    if (picker && typeof picker.addServiceType === 'function') {
+      names.forEach((name) => {
+        if (picker.addServiceType(name)) matched.add(name);
+      });
+    }
     const unmatched = names.filter((n) => !matched.has(n));
     if (unmatched.length === 0) return;
     const otherInput = form.elements.namedItem('other_types');

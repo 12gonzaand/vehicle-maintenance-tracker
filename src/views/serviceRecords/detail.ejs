@@ -56,11 +56,16 @@
 
   <form method="post" action="/vehicles/<%= vehicle.id %>/records/<%= record.id %>/files" enctype="multipart/form-data" class="form form-inline">
     <label>Add files (JPG, PNG, PDF)
-      <input type="file" name="files" accept="image/jpeg,image/png,application/pdf" multiple>
+      <span class="file-field">
+        <input type="file" name="files" accept="image/jpeg,image/png,application/pdf" multiple>
+        <span class="file-field-button btn btn-small" aria-hidden="true">Choose Files</span>
+        <span class="file-field-name">No file chosen</span>
+      </span>
     </label>
     <button type="submit" class="btn">Upload</button>
   </form>
 </section>
 
+<script src="/public/js/file-field.js"></script>
 <script src="/public/js/lightbox.js"></script>
 <%- include('../partials/footer') %>

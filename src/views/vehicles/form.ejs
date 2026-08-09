@@ -34,7 +34,11 @@
 <% if (vehicle) { %>
 <form method="post" action="/vehicles/<%= vehicle.id %>/photo" enctype="multipart/form-data" class="form">
   <label>Vehicle Photo (optional)
-    <input type="file" name="photo" accept="image/jpeg,image/png">
+    <span class="file-field">
+      <input type="file" name="photo" accept="image/jpeg,image/png">
+      <span class="file-field-button btn btn-small" aria-hidden="true">Choose File</span>
+      <span class="file-field-name">No file chosen</span>
+    </span>
   </label>
   <div class="form-actions">
     <button type="submit" class="btn">Upload Photo</button>
@@ -42,4 +46,5 @@
 </form>
 <% } %>
 
+<script src="/public/js/file-field.js"></script>
 <%- include('../partials/footer') %>

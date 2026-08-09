@@ -495,6 +495,45 @@ input:focus, select:focus, textarea:focus { border-color: var(--orange); }
 
 .form-actions { display: flex; gap: 0.5rem; margin-top: 0.25rem; }
 
+/* Native <input type="file"> ignores width/max-width on iOS Safari — the
+   "Choose File" button + filename text keep their intrinsic size and push
+   past the container no matter how the box itself is constrained. Shrinking
+   the real input to 1x1px and clipping it (rather than layering it
+   invisibly on top of the fake button at full size) guarantees its native
+   chrome can never be visible or influence layout, on any browser. It still
+   works because it's nested inside the same <label> as the fake button —
+   clicking any descendant of a <label> activates the input inside it. */
+.file-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  max-width: 100%;
+  cursor: pointer;
+}
+.file-field input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+.file-field-button { flex: 0 0 auto; }
+.file-field-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+}
+
 .receipt-scan-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
 .receipt-scan-status { font-size: 0.8rem; color: var(--ink-muted); }
 

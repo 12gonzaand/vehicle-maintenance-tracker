@@ -42,7 +42,11 @@
   </label>
   <% if (!record) { %>
   <label>Receipts / Invoice Photos (optional, JPG/PNG/PDF)
-    <input type="file" id="service-receipt-files" name="files" accept="image/jpeg,image/png,application/pdf" multiple>
+    <span class="file-field">
+      <input type="file" id="service-receipt-files" name="files" accept="image/jpeg,image/png,application/pdf" multiple>
+      <span class="file-field-button btn btn-small" aria-hidden="true">Choose Files</span>
+      <span class="file-field-name">No file chosen</span>
+    </span>
   </label>
   <div class="receipt-scan-row">
     <button type="button" class="btn btn-small" id="service-scan-btn" data-vehicle-id="<%= vehicle.id %>">Scan receipt to autofill</button>
@@ -55,6 +59,7 @@
   </div>
 </form>
 
+<script src="/public/js/file-field.js"></script>
 <script src="/public/js/service-type-picker.js"></script>
 <% if (!record) { %>
 <script src="/public/js/receipt-scan.js"></script>
