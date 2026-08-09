@@ -9,6 +9,7 @@ Self-hosted web app for tracking maintenance on personal vehicles. Node.js + Exp
 - Maintenance reminders: per-vehicle rules ("every 5,000 mi" and/or "every 6 months" for a given service type), tracked against the most recent matching service record and shown as OK / Due soon / Overdue.
 - Multi-user: anyone who can reach the server can register their own account at `/register`; each account's vehicles, records, and files are fully isolated from every other account's.
 - Session-based login with per-IP rate limiting (5 failed attempts locks that IP out for 10 minutes).
+- `/settings` lets each account pick a Light/Dark/System theme and customize the header text (shown only to that account, e.g. a shop name) — both stored per-user, so sharing a server doesn't mean sharing a look.
 
 ## Setup
 
