@@ -1,12 +1,14 @@
 const express = require('express');
 const router = express.Router();
+const path = require('path');
+const fs = require('fs');
 const Vehicle = require('../models/vehicle');
 const ServiceRecord = require('../models/serviceRecord');
 const MileageLog = require('../models/mileageLog');
 const FuelLog = require('../models/fuelLog');
 const ServiceType = require('../models/serviceType');
 const ReminderRule = require('../models/reminderRule');
-const { uploadVehiclePhoto } = require('../middleware/upload');
+const { uploadVehiclePhoto, UPLOADS_DIR } = require('../middleware/upload');
 
 router.param('id', (req, res, next, id) => {
   const vehicle = Vehicle.find(id);
@@ -80,7 +82,15 @@ router.post('/:id', (req, res) => {
 router.post('/:id/photo', uploadVehiclePhoto.single('photo'), (req, res) => {
   if (req.file) {
     const relativePath = `vehicles/${req.params.id}/${req.file.filename}`;
+    const oldPhotoPath = req.vehicle.photo_path;
     Vehicle.setPhoto(req.params.id, relativePath);
+    // Stored filename is derived from the new upload's mimetype (see
+    // vehiclePhotoStorage), so a photo replaced with a different image type
+    // (e.g. .png -> .jpg) lands at a different path than the old one —
+    // clean up the old file rather than leaving it orphaned on disk.
+    if (oldPhotoPath && oldPhotoPath !== relativePath) {
+      fs.rm(path.join(UPLOADS_DIR, oldPhotoPath), { force: true }, () => {});
+    }
   }
   res.redirect(`/vehicles/${req.params.id}`);
 });
@@ -97,6 +107,8 @@ router.post('/:id/unarchive', (req, res) => {
 
 router.post('/:id/delete', (req, res) => {
   Vehicle.delete(req.params.id);
+  const vehicleDir = path.join(UPLOADS_DIR, 'vehicles', String(req.params.id));
+  fs.rm(vehicleDir, { recursive: true, force: true }, () => {});
   res.redirect('/vehicles');
 });
 

@@ -34,7 +34,19 @@ router.post('/register', (req, res) => {
     return render('That username is already taken.');
   }
 
-  const user = User.create({ username, passwordHash: hashPassword(password) });
+  // The findByUsername check above is a fast path for the common case, but
+  // two concurrent registrations for the same username can both pass it —
+  // the users.username UNIQUE constraint is what actually prevents the
+  // duplicate, so catch that instead of letting it throw as a raw 500.
+  let user;
+  try {
+    user = User.create({ username, passwordHash: hashPassword(password) });
+  } catch (err) {
+    if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+      return render('That username is already taken.');
+    }
+    throw err;
+  }
   ServiceType.seedDefaults(user.id);
 
   req.session.regenerate((err) => {

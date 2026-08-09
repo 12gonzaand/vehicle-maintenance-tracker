@@ -1,4 +1,5 @@
 const db = require('../db');
+const ServiceRecord = require('./serviceRecord');
 
 const MileageLog = {
   allForVehicle(vehicleId) {
@@ -28,12 +29,7 @@ const MileageLog = {
       FROM mileage_logs WHERE vehicle_id = ?
       UNION ALL
       SELECT sr.service_date AS date, sr.mileage, 'service' AS source,
-        (SELECT GROUP_CONCAT(name, ', ') FROM (
-          SELECT st.name FROM service_record_types srt
-          JOIN service_types st ON st.id = srt.service_type_id
-          WHERE srt.service_record_id = sr.id
-          ORDER BY st.name
-        )) AS label
+        ${ServiceRecord.TYPE_NAMES_SUBQUERY} AS label
       FROM service_records sr WHERE sr.vehicle_id = ? AND sr.mileage IS NOT NULL
       ORDER BY date ASC
     `).all(vehicleId, vehicleId);

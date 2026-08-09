@@ -3,10 +3,18 @@
 // Run from the server: npm run reset-password
 // This does NOT create accounts — new accounts are self-serve via /register.
 const readline = require('readline');
+const migrate = require('../src/db/migrate');
 const { hashPassword } = require('../src/lib/auth');
 const User = require('../src/models/user');
 
 async function main() {
+  // server.js always runs this before touching the DB; this script needs
+  // the same guarantee, since it can be run against a DB_PATH that's never
+  // been opened yet (e.g. right after a fresh deploy, before starting the
+  // app for the first time) — without it, the query below fails with a raw
+  // "no such table: users" instead of a normal prompt.
+  migrate();
+
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   const lines = rl[Symbol.asyncIterator]();
 

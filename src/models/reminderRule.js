@@ -41,6 +41,21 @@ const ReminderRule = {
     `).get(vehicleId, serviceType);
   },
 
+  // Adds `months` to a YYYY-MM-DD date, clamped to the target month's
+  // actual length so e.g. Jan 31 + 1 month lands on Feb 28, not March 3
+  // (plain setMonth() overflows into the next month instead of clamping).
+  // Uses UTC getters/setters throughout since service_date is a date-only
+  // string, parsed as UTC midnight — mixing in local-time getters/setters
+  // would make the result depend on the server's timezone.
+  _addMonthsClamped(isoDate, months) {
+    const date = new Date(isoDate);
+    const day = date.getUTCDate();
+    const result = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + months, 1));
+    const daysInTargetMonth = new Date(Date.UTC(result.getUTCFullYear(), result.getUTCMonth() + 1, 0)).getUTCDate();
+    result.setUTCDate(Math.min(day, daysInTargetMonth));
+    return result;
+  },
+
   // Computes due/overdue status for every rule on a vehicle, against that
   // vehicle's current mileage and the most recent matching service record.
   statusForVehicle(vehicle) {
@@ -56,8 +71,7 @@ const ReminderRule = {
       let dueDate = null;
       let daysRemaining = null;
       if (rule.interval_months != null && lastService) {
-        const base = new Date(lastService.service_date);
-        base.setMonth(base.getMonth() + rule.interval_months);
+        const base = this._addMonthsClamped(lastService.service_date, rule.interval_months);
         dueDate = base.toISOString().slice(0, 10);
         daysRemaining = Math.round((base - today) / (1000 * 60 * 60 * 24));
       }

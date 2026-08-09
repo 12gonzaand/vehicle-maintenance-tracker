@@ -40,12 +40,21 @@ router.get('/new', (req, res) => {
   res.render('serviceRecords/form', { vehicle: req.vehicle, record: null, serviceTypes: ServiceType.checklist(req.user.id), error: null });
 });
 
+// Staged files (see uploadStaged above) land in uploads/tmp/ before this
+// handler has a record id to move them under — if it bails out before that
+// move happens, they'd otherwise sit there forever unreferenced by any DB
+// row.
+function cleanupStagedFiles(files) {
+  (files || []).forEach((file) => fs.rm(file.path, { force: true }, () => {}));
+}
+
 router.post('/', uploadStaged.array('files'), (req, res) => {
   const vehicleId = req.vehicle.id;
   const { service_date, mileage, cost, notes, shop } = req.body;
 
   const typeNames = collectServiceTypeNames(req.body);
   if (typeNames.length === 0) {
+    cleanupStagedFiles(req.files);
     return res.render('serviceRecords/form', {
       vehicle: req.vehicle, record: null, serviceTypes: ServiceType.checklist(req.user.id),
       error: 'Select at least one service type.'
@@ -53,14 +62,20 @@ router.post('/', uploadStaged.array('files'), (req, res) => {
   }
   const service_type_ids = ServiceType.ensureAndGetIds(req.user.id, typeNames);
 
-  const record = ServiceRecord.create(vehicleId, {
-    service_type_ids,
-    service_date,
-    mileage: mileage ? Number(mileage) : null,
-    cost: cost ? Number(cost) : null,
-    notes,
-    shop
-  });
+  let record;
+  try {
+    record = ServiceRecord.create(vehicleId, {
+      service_type_ids,
+      service_date,
+      mileage: mileage ? Number(mileage) : null,
+      cost: cost ? Number(cost) : null,
+      notes,
+      shop
+    });
+  } catch (err) {
+    cleanupStagedFiles(req.files);
+    throw err;
+  }
 
   Vehicle.bumpMileageIfHigher(vehicleId, record.mileage);
 

@@ -101,3 +101,4 @@ const ServiceRecord = {
 };
 
 module.exports = ServiceRecord;
+module.exports.TYPE_NAMES_SUBQUERY = TYPE_NAMES_SUBQUERY;
