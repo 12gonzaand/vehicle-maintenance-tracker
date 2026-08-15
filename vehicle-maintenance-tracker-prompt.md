@@ -47,10 +47,3 @@ A self-hosted web app for tracking maintenance on personal vehicles. This can ru
 3. Basic CRUD UI for vehicles and service records
 4. File upload handling with validation (file type/size limits)
 5. A README with setup instructions (npm install, env vars, how to run, how to back up the SQLite file and uploads folder)
-
-## Out of Scope for v1
-- Multi-user accounts with permissions
-- Mobile app (responsive web is enough)
-- Integration with any external car APIs (VIN decoding, etc.) — can revisit later
-
-Please start by proposing the database schema and folder structure before writing code, so I can confirm the approach.
