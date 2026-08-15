@@ -1,6 +1,6 @@
 # Prompt: Vehicle Maintenance Tracker Web App
 
-Build a self-hosted web app for tracking maintenance on my personal vehicles. This will run on my home Ubuntu server alongside my other self-hosted services.
+A self-hosted web app for tracking maintenance for personal vehicles. This can run on your homeserver alongside other self-hosted services.
 
 ## Core Requirements
 
