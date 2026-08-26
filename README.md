@@ -287,7 +287,7 @@ A `git push` alone does **not** update the running app — restart the service a
 
 ### Cert renewal
 
-Tailscale-issued certs expire periodically. `scripts/renew-cert.sh` re-issues the cert (a no-op unless it's within 30 days of expiring) and restarts `maintenance-tracker.service` only if the key actually changed. Automate it with a second `systemd --user` timer, `~/.config/systemd/user/maintenance-tracker-cert-renew.service`:
+Tailscale-issued certs expire periodically. `scripts/renew-cert.sh` re-issues the cert (a no-op unless it's within 30 days of expiring) and restarts `maintenance-tracker.service` only if the key actually changed. It reads the MagicDNS name to renew from `CERT_DOMAIN` in `.env` (same value you used in step 2 of the cert setup above). Automate it with a second `systemd --user` timer, `~/.config/systemd/user/maintenance-tracker-cert-renew.service`:
 
 ```ini
 [Unit]

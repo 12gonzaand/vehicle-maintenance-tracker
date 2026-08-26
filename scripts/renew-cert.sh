@@ -1,14 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DOMAIN="my-server.abc123de.ts.net"
-APP_DIR="/home/youruser/maintenance-tracker"
+APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+set -a
+source "$APP_DIR/.env"
+set +a
+
+if [ -z "${CERT_DOMAIN:-}" ]; then
+  echo "CERT_DOMAIN is not set in .env — set it to this node's Tailscale MagicDNS name (see \`tailscale status\`)." >&2
+  exit 1
+fi
+
 CERT="$APP_DIR/certs/cert.pem"
 KEY="$APP_DIR/certs/key.pem"
 
 before=$(sha256sum "$KEY" 2>/dev/null || true)
 
-tailscale cert --cert-file "$CERT" --key-file "$KEY" --min-validity 720h "$DOMAIN"
+tailscale cert --cert-file "$CERT" --key-file "$KEY" --min-validity 720h "$CERT_DOMAIN"
 
 chmod 644 "$CERT"
 chmod 600 "$KEY"
