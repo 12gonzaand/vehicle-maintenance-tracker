@@ -31,12 +31,17 @@ jobs:
         if: steps.version.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          CURRENT_VERSION: ${{ steps.version.outputs.current }}
         run: |
-          TAG="v${{ steps.version.outputs.current }}"
+          case "$CURRENT_VERSION" in
+            *[!0-9.a-zA-Z+-]*) echo "Refusing to tag, invalid version string: $CURRENT_VERSION" >&2; exit 1;;
+          esac
+          TAG="v$CURRENT_VERSION"
           if git rev-parse "$TAG" >/dev/null 2>&1; then
             echo "Tag $TAG already exists, skipping"
             exit 0
           fi
           git tag "$TAG"
           git push origin "$TAG"
-          gh release create "$TAG" --title "$TAG" --notes "$(git log -1 --pretty=%B)"
+          git log -1 --pretty=%B > /tmp/release-notes.md
+          gh release create "$TAG" --title "$TAG" --notes-file /tmp/release-notes.md
