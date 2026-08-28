@@ -31,6 +31,7 @@ const app = express();
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+app.locals.appVersion = require('../package.json').version;
 
 // Only trust X-Forwarded-* headers from a proxy connecting via loopback —
 // that's cloudflared (Cloudflare Tunnel), forwarding the public hostname to
