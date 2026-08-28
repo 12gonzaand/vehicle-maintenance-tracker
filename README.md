@@ -254,6 +254,7 @@ After=network.target
 WorkingDirectory=/home/<youruser>/maintenance-tracker
 ExecStart=/home/<youruser>/.nvm/versions/node/v24.18.0/bin/node src/server.js
 Restart=on-failure
+RestartSec=5
 EnvironmentFile=/home/<youruser>/maintenance-tracker/.env
 
 [Install]
@@ -261,6 +262,8 @@ WantedBy=default.target
 ```
 
 `ExecStart` must point at the real node binary — this box installs node via nvm, so `/usr/bin/node` doesn't exist. Check yours with `which node`.
+
+`RestartSec=5` matters if the app binds to a Tailscale IP: on boot, `tailscaled` can take a few seconds to bring the interface up, and without a delay the app can exhaust systemd's restart-rate limit and land in `failed` before Tailscale is ready.
 
 Then:
 
